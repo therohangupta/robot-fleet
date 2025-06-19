@@ -1,0 +1,1318 @@
+trevorasbery@macbookpro ~ % python3 -m robot_fleet.server
+Using default PostgreSQL database: postgresql+asyncpg://robot_user:secret@localhost:5432/robot_fleet
+Creating service...
+Creating database tables...
+Database initialization complete
+
+Available SQL tables:
+- world_statements
+- robots
+- tasks
+- goals
+- plans
+- test_table
+
+🚀 Fleet Manager Server is now serving on port 50051
+2025-05-14 13:00:46,047 - robot_fleet.server.service - INFO - Listing plans
+2025-05-14 13:00:46,057 - robot_fleet.server.service - INFO - Found 2 plans
+2025-05-14 13:00:46,058 - robot_fleet.server.service - INFO - Listing goals
+2025-05-14 13:00:46,060 - robot_fleet.server.service - INFO - Found 4 goals
+2025-05-14 13:00:46,060 - robot_fleet.server.service - INFO - Listing tasks with filters: plan_ids=[], goal_ids=[], robot_ids=[]
+2025-05-14 13:00:48,931 - robot_fleet.server.service - INFO - Listing plans
+2025-05-14 13:00:48,933 - robot_fleet.server.service - INFO - Found 2 plans
+2025-05-14 13:00:48,933 - robot_fleet.server.service - INFO - Listing goals
+2025-05-14 13:00:48,935 - robot_fleet.server.service - INFO - Found 4 goals
+2025-05-14 13:00:48,935 - robot_fleet.server.service - INFO - Listing tasks with filters: plan_ids=[], goal_ids=[], robot_ids=[]
+Received StartPlan request for plan_id: 1
+Using default PostgreSQL database: postgresql+asyncpg://robot_user:secret@localhost:5432/robot_fleet
+[<robot_fleet.robots.registry.models.TaskModel object at 0x113fc0ad0>, <robot_fleet.robots.registry.models.TaskModel object at 0x113fc0c50>, <robot_fleet.robots.registry.models.TaskModel object at 0x113fc0cd0>, <robot_fleet.robots.registry.models.TaskModel object at 0x113fc0d50>, <robot_fleet.robots.registry.models.TaskModel object at 0x113fc0dd0>, <robot_fleet.robots.registry.models.TaskModel object at 0x113fc0e90>, <robot_fleet.robots.registry.models.TaskModel object at 0x113fc0f10>, <robot_fleet.robots.registry.models.TaskModel object at 0x113fc0f90>, <robot_fleet.robots.registry.models.TaskModel object at 0x113fc1010>]
+Robot hsr tasks in order: [1, 3, 4, 6, 7, 8]
+Robot locobot tasks in order: [2, 5, 9]
+Task HSR navigates to the kitchen in progress, can't start 3, robot hsr busy
+Starting task HSR navigates to the kitchen for robot hsr
+Task Locobot navigates to the kitchen in progress, can't start 5, robot locobot busy
+Starting task Locobot navigates to the kitchen for robot locobot
+Task HSR navigates to the kitchen in progress, can't start 3, robot hsr busy
+Task Locobot navigates to the kitchen in progress, can't start 5, robot locobot busy
+Task HSR navigates to the kitchen in progress, can't start 3, robot hsr busy
+Task Locobot navigates to the kitchen in progress, can't start 5, robot locobot busy
+Task HSR navigates to the kitchen in progress, can't start 3, robot hsr busy
+Task Locobot navigates to the kitchen in progress, can't start 5, robot locobot busy
+Task HSR navigates to the kitchen in progress, can't start 3, robot hsr busy
+Task Locobot navigates to the kitchen in progress, can't start 5, robot locobot busy
+Task HSR navigates to the kitchen in progress, can't start 3, robot hsr busy
+Task Locobot navigates to the kitchen in progress, can't start 5, robot locobot busy
+Task HSR navigates to the kitchen in progress, can't start 3, robot hsr busy
+Task Locobot navigates to the kitchen in progress, can't start 5, robot locobot busy
+Task HSR navigates to the kitchen in progress, can't start 3, robot hsr busy
+Task Locobot navigates to the kitchen in progress, can't start 5, robot locobot busy
+Task HSR navigates to the kitchen in progress, can't start 3, robot hsr busy
+Task Locobot navigates to the kitchen in progress, can't start 5, robot locobot busy
+Task HSR navigates to the kitchen in progress, can't start 3, robot hsr busy
+Task Locobot navigates to the kitchen in progress, can't start 5, robot locobot busy
+Task HSR navigates to the kitchen in progress, can't start 3, robot hsr busy
+Task Locobot navigates to the kitchen in progress, can't start 5, robot locobot busy
+Task HSR navigates to the kitchen in progress, can't start 3, robot hsr busy
+Task Locobot navigates to the kitchen in progress, can't start 5, robot locobot busy
+Task HSR navigates to the kitchen in progress, can't start 3, robot hsr busy
+Task Locobot navigates to the kitchen in progress, can't start 5, robot locobot busy
+Task HSR navigates to the kitchen in progress, can't start 3, robot hsr busy
+Task Locobot navigates to the kitchen in progress, can't start 5, robot locobot busy
+Task HSR navigates to the kitchen in progress, can't start 3, robot hsr busy
+Task Locobot navigates to the kitchen in progress, can't start 5, robot locobot busy
+Task HSR navigates to the kitchen in progress, can't start 3, robot hsr busy
+Task Locobot navigates to the kitchen in progress, can't start 5, robot locobot busy
+Task HSR navigates to the kitchen in progress, can't start 3, robot hsr busy
+Task Locobot navigates to the kitchen in progress, can't start 5, robot locobot busy
+Task HSR navigates to the kitchen in progress, can't start 3, robot hsr busy
+Task Locobot navigates to the kitchen in progress, can't start 5, robot locobot busy
+Task HSR navigates to the kitchen in progress, can't start 3, robot hsr busy
+Task Locobot navigates to the kitchen in progress, can't start 5, robot locobot busy
+Task HSR navigates to the kitchen in progress, can't start 3, robot hsr busy
+Task Locobot navigates to the kitchen in progress, can't start 5, robot locobot busy
+Task HSR navigates to the kitchen in progress, can't start 3, robot hsr busy
+Task Locobot navigates to the kitchen in progress, can't start 5, robot locobot busy
+Task HSR navigates to the kitchen in progress, can't start 3, robot hsr busy
+Task Locobot navigates to the kitchen in progress, can't start 5, robot locobot busy
+Task HSR navigates to the kitchen in progress, can't start 3, robot hsr busy
+Task Locobot navigates to the kitchen in progress, can't start 5, robot locobot busy
+Task HSR navigates to the kitchen in progress, can't start 3, robot hsr busy
+Task Locobot navigates to the kitchen in progress, can't start 5, robot locobot busy
+Task HSR navigates to the kitchen in progress, can't start 3, robot hsr busy
+Task Locobot navigates to the kitchen in progress, can't start 5, robot locobot busy
+Task HSR navigates to the kitchen in progress, can't start 3, robot hsr busy
+Task Locobot navigates to the kitchen in progress, can't start 5, robot locobot busy
+Task HSR navigates to the kitchen in progress, can't start 3, robot hsr busy
+Task Locobot navigates to the kitchen in progress, can't start 5, robot locobot busy
+Task HSR navigates to the kitchen in progress, can't start 3, robot hsr busy
+Task Locobot navigates to the kitchen in progress, can't start 5, robot locobot busy
+<Response [200 OK]>
+Task HSR navigates to the kitchen for robot hsr completed with result: success=True message="Succeeded task!\n                            Task Given by Planner: '{task_description}'\n                            Task Result Status by Robot: '{task_result_msg}'"
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Starting task HSR picks up the first cup for robot hsr
+Task Locobot navigates to the kitchen in progress, can't start 5, robot locobot busy
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the kitchen in progress, can't start 5, robot locobot busy
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the kitchen in progress, can't start 5, robot locobot busy
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the kitchen in progress, can't start 5, robot locobot busy
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the kitchen in progress, can't start 5, robot locobot busy
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the kitchen in progress, can't start 5, robot locobot busy
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the kitchen in progress, can't start 5, robot locobot busy
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the kitchen in progress, can't start 5, robot locobot busy
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the kitchen in progress, can't start 5, robot locobot busy
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the kitchen in progress, can't start 5, robot locobot busy
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the kitchen in progress, can't start 5, robot locobot busy
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the kitchen in progress, can't start 5, robot locobot busy
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the kitchen in progress, can't start 5, robot locobot busy
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the kitchen in progress, can't start 5, robot locobot busy
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the kitchen in progress, can't start 5, robot locobot busy
+<Response [200 OK]>
+Task Locobot navigates to the kitchen for robot locobot completed with result: success=True message="Succeeded task!\n                            Task Given by Planner: '{task_description}'\n                            Task Result Status by Robot: '{task_result_msg}'"
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR picks up the first cup in progress, can't start 4, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+<Response [200 OK]>
+Task HSR picks up the first cup for robot hsr completed with result: success=True message="Succeeded task!\n                            Task Given by Planner: '{task_description}'\n                            Task Result Status by Robot: '{task_result_msg}'"
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Starting task HSR places the first cup into the Locobot's basket for robot hsr
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9
+Task HSR places the first cup into the Locobot's basket in progress, can't start 6, robot hsr busy
+Task Locobot navigates to the hallway waiting on dependencies, can't start 9

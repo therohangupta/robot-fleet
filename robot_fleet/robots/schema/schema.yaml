@@ -1,0 +1,62 @@
+# Robot Type Schema Definition
+type: object
+required:
+  - metadata
+  - deployment
+  - container
+  - capabilities
+  - taskServer
+properties:
+  metadata:
+    type: object
+    required:
+      - name
+    properties:
+      name:
+        type: string
+      description:
+        type: string
+  deployment:
+    type: object
+    required:
+      - docker_host
+    properties:
+      docker_host:
+        type: string
+        description: "Hostname or IP address where the container should be deployed"
+      docker_port:
+        type: integer
+        default: 2375
+        description: "Docker daemon port"
+  container:
+    type: object
+    required:
+      - image
+    properties:
+      image:
+        type: string
+        description: "Docker image to use"
+      environment:
+        type: object
+        description: "Environment variables"
+        patternProperties:
+          "^.*$":
+            type: string
+  capabilities:
+    type: array
+    items:
+      type: string
+    description: "List of capabilities this robot supports"
+  taskServer:
+    type: object
+    required:
+      - host
+      - port
+    properties:
+      host:
+        type: string
+        description: "Hostname or IP address of the Task Server"
+      port:
+        type: integer
+        description: "Port of the Task Server"
+      # Add any other TaskServer specific config here

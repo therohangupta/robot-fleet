@@ -1,0 +1,25 @@
+{goals_context}
+
+{robot_context}
+
+Carefully consider the following statements about the environment before planning:
+{world_statements}
+
+Generate a comprehensive DAG-based plan that addresses all the goals above in a single unified DAG.
+Tasks can depend on any previous tasks, including tasks from different goals.
+For tasks with no dependencies, use an empty depends_on list.
+
+Important: 
+1. Create a unique ID for each node using the format: "nodeX" 
+   where X is a sequential number (e.g., "node0", "node1", "node2")
+
+2. When specifying dependencies in 'depends_on', use these same node IDs
+
+3. Set the correct goal_id for each node to indicate which goal it belongs to
+
+4. Look for opportunities to create dependencies between tasks from different goals
+   when it makes logical sense (e.g., a task from goal 2 might depend on a task from goal 1)
+
+5. Maximize parallelism where possible by only creating dependencies when truly needed 
+
+6. Remember to make the tasks as simple as possible and don't make tasks that are unnecessary.

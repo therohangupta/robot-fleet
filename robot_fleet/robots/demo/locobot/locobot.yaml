@@ -1,0 +1,26 @@
+# Locobot
+metadata:
+  name: Locobot
+  description: "Locobot navigation only robot"
+
+deployment:
+  docker_host: localhost  # Default to local deployment for testing
+  docker_port: 2375
+
+taskServer:
+  host: "elle-nuc10i3fnk.local"
+  port: 5001       
+
+container:
+  image: robotfleet/locobot:1.0
+  environment:
+    ROBOT_ID: ""  # Will be set when instantiating
+    LOG_LEVEL: info
+    PORT: "5001"  # Default port for the robot server
+
+capabilities:
+  - can navigate to known locations
+  - has a large basket that other robots can place objects into
+  - can not pick or place objects on its own
+  - can search for objects faster than most robots
+  - can deliver items on its basket

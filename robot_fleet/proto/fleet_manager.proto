@@ -1,0 +1,400 @@
+syntax = "proto3";
+
+package robot_fleet;
+
+// Import timestamp for status tracking
+import "google/protobuf/timestamp.proto";
+
+// Service definition for robot fleet management
+service FleetManager {
+    // Register robot metadata with the central node (stores in etcd)
+    rpc RegisterRobot (RegisterRobotRequest) returns (RegisterRobotResponse);
+    
+    // Unregister a robot from the central node
+    rpc UnregisterRobot (UnregisterRobotRequest) returns (UnregisterRobotResponse);
+    
+    // Deploy a container for a registered robot using stored configuration
+    rpc DeployRobot (DeployRobotRequest) returns (DeployRobotResponse);
+    
+    // Undeploy (stop and remove) a robot container
+    rpc UndeployRobot (UndeployRobotRequest) returns (UndeployRobotResponse);
+    
+    // List all robots
+    rpc ListRobots (ListRobotsRequest) returns (ListRobotsResponse);
+    
+    // Get detailed status of a specific robot
+    rpc GetRobotStatus (GetRobotStatusRequest) returns (RobotStatus);
+
+    // Planning
+    rpc CreatePlan (CreatePlanRequest) returns (CreatePlanResponse);
+    rpc GetPlan (GetPlanRequest) returns (GetPlanResponse);
+    rpc ListPlans (ListPlansRequest) returns (ListPlansResponse);
+    rpc DeletePlan (DeletePlanRequest) returns (DeletePlanResponse);
+
+    // Task management
+    rpc CreateTask (CreateTaskRequest) returns (CreateTaskResponse);
+    rpc GetTask (GetTaskRequest) returns (GetTaskResponse);
+    rpc ListTasks (ListTasksRequest) returns (ListTasksResponse);
+    rpc DeleteTask (DeleteTaskRequest) returns (DeleteTaskResponse);
+
+    // Goal management
+    rpc CreateGoal (CreateGoalRequest) returns (CreateGoalResponse);
+    rpc GetGoal (GetGoalRequest) returns (GetGoalResponse);
+    rpc ListGoals (ListGoalsRequest) returns (ListGoalsResponse);
+    rpc DeleteGoal (DeleteGoalRequest) returns (DeleteGoalResponse);
+
+    // World State Management
+    rpc AddWorldStatement(AddWorldStatementRequest) returns (AddWorldStatementResponse);
+    rpc GetWorldStatement(GetWorldStatementRequest) returns (GetWorldStatementResponse);
+    rpc ListWorldStatements(ListWorldStatementsRequest) returns (ListWorldStatementsResponse);
+    rpc DeleteWorldStatement(DeleteWorldStatementRequest) returns (DeleteWorldStatementResponse);
+
+    rpc StartPlan(StartPlanRequest) returns (StartPlanResponse);
+}
+
+message StartPlanRequest {
+    int64 plan_id = 1;
+}
+
+message StartPlanResponse {
+    Plan plan = 1;
+    string error = 2;
+}
+
+// Common message for robot identification
+message RobotIdentifier {
+    string robot_id = 1;
+    string robot_type = 2;
+}
+
+// Request to register robot metadata
+message RegisterRobotRequest {
+    string robot_id = 1;  // Unique identifier for the robot
+    string robot_type = 2;  // Type/name of the robot
+    string description = 3;  // Optional description
+    repeated string capabilities = 4;  // List of robot capabilities
+    TaskServerInfo task_server_info = 5;  // Task connection info
+    DeploymentInfo deployment = 6;  // Docker deployment info
+    ContainerConfig container = 7;  // Container configuration
+}
+
+message ContainerConfig {
+    string image = 1;  // Docker image to use
+    map<string, string> environment = 2;  // Environment variables
+}
+
+message RegisterRobotResponse {
+    bool success = 1;
+    string message = 2;
+    Robot robot = 3;  // The registered robot information
+}
+
+// Request to deploy a registered robot (uses stored config)
+message DeployRobotRequest {
+    string robot_id = 1;  // Must be already registered
+    // All other deployment info is fetched from registry
+}
+
+message DeployRobotResponse {
+    bool success = 1;
+    string message = 2;
+    ContainerInfo container = 3;
+}
+
+message UndeployRobotRequest {
+    string robot_id = 1;
+}
+
+message UndeployRobotResponse {
+    bool success = 1;
+    string message = 2;
+}
+
+message UnregisterRobotRequest {
+    string robot_id = 1;
+}
+
+message UnregisterRobotResponse {
+    bool success = 1;
+    string message = 2;
+}
+
+message ListRobotsRequest {
+    enum Filter {
+        ALL = 0;
+        DEPLOYED = 1;
+        REGISTERED = 2;
+    }
+    Filter filter = 1;
+}
+
+message ListRobotsResponse {
+    repeated Robot robots = 1;
+}
+
+message GetRobotStatusRequest {
+    string robot_id = 1;
+}
+
+message RobotInfo {
+    string robot_id = 1;
+    string robot_type = 2;
+    string description = 3;
+    repeated string capabilities = 4;
+    RobotStatus status = 5;
+    ContainerInfo container = 6;
+    DeploymentInfo deployment = 7;
+    TaskServerInfo task_server_info = 8;
+    google.protobuf.Timestamp last_updated = 9;
+    repeated int64 task_ids = 10;
+}
+
+message RobotStatus {
+    enum State {
+        UNKNOWN = 0;
+        REGISTERED = 1;
+        DEPLOYING = 2;
+        RUNNING = 3;
+        ERROR = 4;
+        STOPPED = 5;
+    }
+    State state = 1;
+    string message = 2;
+}
+
+message ContainerInfo {
+    string container_id = 1;
+    string image = 2;
+    string host = 3;
+    int32 port = 4;
+    map<string, string> environment = 5;
+    google.protobuf.Timestamp created_at = 6;
+}
+
+message DeploymentInfo {
+    string docker_host = 1;
+    int32 docker_port = 2;
+}
+
+message TaskServerInfo {
+    string host = 1;
+    int32 port = 2;
+}
+
+// --- Planning Strategy Enum ---
+enum PlanningStrategy {
+    PLANNING_STRATEGY_UNSPECIFIED = 0;
+    MONOLITHIC = 1;
+    DAG = 2;
+    BIG_DAG = 3;
+}
+
+enum AllocationStrategy {
+    ALLOCATION_STRATEGY_UNSPECIFIED = 0;
+    LP = 1;
+    LLM = 2;
+    COST_BASED = 3;
+}
+
+// --- Core Objects ---
+message Robot {
+    string robot_id = 1;
+    string robot_type = 2;
+    string description = 3;
+    repeated string capabilities = 4;
+    RobotStatus status = 5;
+    ContainerInfo container = 6;
+    DeploymentInfo deployment = 7;
+    TaskServerInfo task_server_info = 8;
+    google.protobuf.Timestamp last_updated = 9;
+    repeated int64 task_ids = 10;
+}
+
+message Task {
+    int64 task_id = 1;
+    string description = 2;
+    int64 goal_id = 3;
+    int64 plan_id = 4;
+    repeated int64 dependency_task_ids = 5;
+    string robot_id = 6;
+    TaskStatus status = 7;
+    optional string robot_type = 8;
+}
+
+message Goal {
+    int64 goal_id = 1;
+    string description = 2;
+    repeated int64 task_ids = 3;
+}
+
+message Plan {
+    int64 plan_id = 1;
+    PlanningStrategy planning_strategy = 2;
+    AllocationStrategy allocation_strategy = 3;
+    repeated int64 task_ids = 4;
+    repeated int64 goal_ids = 5;
+}
+
+// --- Service Requests/Responses ---
+
+message CreatePlanRequest {
+    PlanningStrategy planning_strategy = 1;
+    AllocationStrategy allocation_strategy = 2;
+    repeated int64 goal_ids = 3;
+}
+message CreatePlanResponse {
+    Plan plan = 1;
+    string error = 2;
+}
+
+message GetPlanRequest {
+    int64 plan_id = 1;
+}
+message GetPlanResponse {
+    Plan plan = 1;
+    string error = 2;
+}
+
+message ListPlansRequest {}
+message ListPlansResponse {
+    repeated Plan plans = 1;
+    string error = 2;
+}
+
+message DeletePlanRequest {
+    int64 plan_id = 1;
+}
+message DeletePlanResponse {
+    Plan plan = 1;
+    string error = 2;
+}
+
+message CreateTaskRequest {
+    string description = 1;
+    int64 goal_id = 2;
+    int64 plan_id = 3;
+    repeated int64 dependency_task_ids = 4;
+    string robot_id = 5;
+    string robot_type = 6;
+}
+message CreateTaskResponse {
+    Task task = 1;
+    string error = 2;
+}
+
+message GetTaskRequest {
+    int64 task_id = 1;
+}
+message GetTaskResponse {
+    Task task = 1;
+    string error = 2;
+}
+
+message ListTasksRequest {
+    repeated int64 plan_ids = 1;
+    repeated int64 goal_ids = 2;
+    repeated string robot_ids = 3;
+}
+message ListTasksResponse {
+    repeated Task tasks = 1;
+    string error = 2;
+}
+
+message DeleteTaskRequest {
+    int64 task_id = 1;
+}
+message DeleteTaskResponse {
+    Task task = 1;
+    string error = 2;
+}
+
+message CreateGoalRequest {
+    string description = 1;
+    repeated int64 task_ids = 2;
+}
+message CreateGoalResponse {
+    Goal goal = 1;
+    string error = 2;
+}
+
+message GetGoalRequest {
+    int64 goal_id = 1;
+}
+message GetGoalResponse {
+    Goal goal = 1;
+    string error = 2;
+}
+
+message ListGoalsRequest {}
+message ListGoalsResponse {
+    repeated Goal goals = 1;
+    string error = 2;
+}
+
+message DeleteGoalRequest {
+    int64 goal_id = 1;
+}
+message DeleteGoalResponse {
+    Goal goal = 1;
+    string error = 2;
+}
+
+// World Statement related messages
+message WorldStatement {
+    string id = 1;
+    string statement = 2;
+    google.protobuf.Timestamp created_at = 3;
+}
+
+message AddWorldStatementRequest {
+    string statement = 1;
+}
+
+message AddWorldStatementResponse {
+    WorldStatement world_statement = 1;
+    string error = 2;
+}
+
+message GetWorldStatementRequest {
+    string world_statement_id = 1;
+}
+
+message GetWorldStatementResponse {
+    WorldStatement world_statement = 1;
+    string error = 2;
+}
+
+message ListWorldStatementsRequest {
+    // Add filtering/pagination options if needed
+}
+
+message ListWorldStatementsResponse {
+    repeated WorldStatement world_statements = 1;
+    string error = 2;
+}
+
+message DeleteWorldStatementRequest {
+    string world_statement_id = 1;
+}
+
+message DeleteWorldStatementResponse {
+    bool success = 1;
+    string error = 2;
+}
+
+enum TaskStatus {
+    TASK_UNKNOWN = 0;
+    TASK_PENDING = 1;
+    TASK_IN_PROGRESS = 2;
+    TASK_COMPLETED = 3;
+    TASK_CANCELLED = 4;
+    TASK_FAILED = 5;
+}
+
+enum GoalStatus {
+    GOAL_UNKNOWN = 0;
+    GOAL_ACTIVE = 1;
+    GOAL_COMPLETED = 2;
+    GOAL_CANCELLED = 3;
+    GOAL_FAILED = 4;
+}

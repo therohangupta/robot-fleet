@@ -1,0 +1,30 @@
+ORIGINAL GOALS:
+{goals_context}
+
+PLAN EXECUTION STATUS:
+A failure or discovery of new information occurred while executing plan (Plan ID: {plan_id}) involving Task ID {failed_task_id}.
+
+FAILURE/NEW INFORMATION DETAILS:
+{failure_message}
+
+ROBOTS AND CURRENT ASSIGNMENTS AT TIME OF FAILURE OR NEW INFORMATION DISCOVERY:
+{robot_task_status_context}
+
+TASKS ALREADY COMPLETED (or assumed completed before failure or new information discovery):
+{completed_tasks_summary}
+
+PENDING/CANCELLED TASKS FROM ORIGINAL PLAN (due to failure or new information discovery):
+{pending_tasks_summary}
+
+AVAILABLE ROBOTS AND THEIR CAPABILITIES:
+{robot_capabilities_context}
+
+INITIAL STATEMENTS ABOUT THE WORLD:
+{world_statements}
+
+INSTRUCTIONS:
+Generate a new sequential list of tasks to recover from the failure or new information and achieve the original goals.
+The new tasks should pick up from the current state after the failure.
+The first task in your new sequence should have empty 'dependency_task_ids'.
+Subsequent tasks should list dependencies based on the zero-based index of tasks *in your new sequence*.
+Ensure all original goals are addressed by the combination of already completed tasks and your new task list. 

@@ -1,0 +1,9 @@
+robotctl register /Users/rohangupta/Desktop/Workspace/glamor/multirobot-task/robot_fleet/robots/demo/hsr/fake_hsr.yaml hsr
+robotctl register /Users/rohangupta/Desktop/Workspace/glamor/multirobot-task/robot_fleet/robots/demo/locobot/fake_locobot.yaml locobot
+robotctl goal add "Find a cup somewhere and bring it to the living room."
+robotctl world add "The HSR is in an unknown location"
+robotctl world add "The Locobot is in an unknown location"
+robotctl world add "Known locations are a kitchen, a living room, and a hallway."
+robotctl world add "Uncertainty exists around where specific objects are located."
+robotctl world add "Each location is small and therefore searchable by at most one of the robots at any given time."
+robotctl plan create big_dag llm 1

@@ -1,0 +1,24 @@
+robotctl register /Users/trevorasbery/Desktop/AgenticNet/multirobot-task/robot_fleet/robots/demo/hsr/hsr.yaml hsr
+robotctl register /Users/trevorasbery/Desktop/AgenticNet/multirobot-task/robot_fleet/robots/demo/locobot/locobot.yaml locobot
+robotctl goal add "bring a cup to the kitchen and the living room"
+robotctl world add "The HSR is in an unknown location"
+robotctl world add "The Locobot is in an unknown location"
+robotctl world add "There is a kitchen, a living room and a hallway."
+
+# 1. HSR: Go to kitchen
+robotctl task add "go to the kitchen" --goal-id 1 --plan-id 1 --robot-id hsr --robot-type hsr
+
+# 2. Locobot: Go to kitchen
+robotctl task add "go to the kitchen" --goal-id 1 --plan-id 1 --robot-id locobot --robot-type locobot
+
+# 3. HSR: Find 2 cups and place 1 in locobot basket (depends on both robots being in kitchen)
+robotctl task add "find 2 cups and place 1 in locobot basket" --goal-id 1 --plan-id 1 --robot-id hsr --dependencies 1,2 --robot-type hsr
+
+# 4. Locobot: Navigate to hallway (after cup is placed in basket)
+robotctl task add "navigate to hallway" --goal-id 1 --plan-id 1 --robot-id locobot --dependencies 3 --robot-type locobot
+
+# 5. HSR: Pick up one cup (after locobot leaves kitchen)
+robotctl task add "pick up one cup" --goal-id 1 --plan-id 1 --robot-id hsr --dependencies 4 --robot-type hsr
+
+# 6. HSR: Navigate to living room (after picking up cup)
+robotctl task add "navigate to living room" --goal-id 1 --plan-id 1 --robot-id hsr --dependencies 5 --robot-type hsr

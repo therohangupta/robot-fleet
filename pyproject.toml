@@ -1,0 +1,17 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "robot-fleet"
+version = "0.1.0"
+description = "Robot Fleet Management System"
+requires-python = ">=3.11"
+dependencies = [
+    "click",
+    "grpcio",
+    "pyyaml",
+]
+
+[project.scripts]
+robotctl = "robot_fleet.cli.robotctl:main" 

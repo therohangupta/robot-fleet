@@ -1,0 +1,13 @@
+Plan: 1
+  Strategy: BIG_DAG
+  Allocation: LLM
+  Tasks (DAG View):
+    ├─ (G1, T1, hsr): HSR navigates to the kitchen
+    ├─ (G2, T2, locobot): Locobot navigates to the kitchen
+    ├─ (G1, T3, hsr): HSR picks up the first cup (depends on T1)
+    ├─ (G1, T4, hsr): HSR places the first cup into the Locobot's basket (depends on T2, T3)
+    ├─ (G1, T5, locobot): Locobot navigates to the hallway (depends on T4)
+    ├─ (G2, T6, hsr): HSR picks up the second cup (depends on T4)
+    ├─ (G1, T9, locobot): Locobot arrives at the hallway and completes delivery of the first cup (depends on T5)
+    ├─ (G2, T7, hsr): HSR navigates to the living room (depends on T6)
+    └─ (G2, T8, hsr): HSR places the second cup in the living room (depends on T7)

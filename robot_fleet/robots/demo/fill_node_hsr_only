@@ -1,0 +1,5 @@
+robotctl register hsr/hsr.yaml hsr
+robotctl goal add "find a cup in the area"
+robotctl task add "go to the kitchen" --goal-id 1 --plan-id 1 --robot-id hsr --robot-type hsr
+robotctl task add "go to the living room" --goal-id 1 --plan-id 1 --robot-id hsr --robot-type hsr --dependencies 1
+robotctl task add "go to the hallway" --goal-id 1 --plan-id 1 --robot-id hsr --robot-type hsr --dependencies 2

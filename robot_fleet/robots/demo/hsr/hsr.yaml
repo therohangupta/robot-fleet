@@ -1,0 +1,32 @@
+# Human Support Robot Type Definition
+metadata:
+  name: HSR
+  description: "Human support robot made by toyota"
+
+deployment:
+  docker_host: localhost  # Default to local deployment for testing
+  docker_port: 2375
+
+taskServer:
+  host: hsrc.local
+  port: 5001
+
+container:
+  image: robotfleet/pick-place:1.0
+  environment:
+    ROBOT_ID: ""  # Will be set when instantiating
+    LOG_LEVEL: info
+    PORT: "5003"  # Default port for the robot server
+    ARM_CONFIG: ""  # Required for arm control
+    GRIPPER_CONFIG: ""  # Required for gripper control
+  required_devices:
+    - /dev/ttyUSB*  # For arm and gripper
+
+capabilities:
+  - can navigate to known locations
+  - can pick up objects
+  - can place objects
+  - can place objects on most navigation robots
+  - can only hold one object at a time
+  - can deliver objects it can hold and carry
+  - can search for objects

@@ -1,0 +1,22 @@
+GOAL ID: {goal_id}
+GOAL DESCRIPTION: {goal_description}
+
+{robot_context}
+
+STATEMENTS ABOUT THE WORLD:
+{world_statements}
+
+Generate a DAG-based plan where tasks can depend on any number of previous tasks.
+For tasks with no dependencies, use an empty depends_on list.
+
+Important: 
+1. Create a unique ID for each node using the format: "{goal_prefix}nodeX" 
+   where X is a sequential number (e.g., "{goal_prefix}node0", "{goal_prefix}node1")
+
+2. When specifying dependencies in 'depends_on', use these same node IDs
+
+3. Make sure to set the goal_id to {goal_id} for all nodes in this plan
+
+4. Maximize parallelism where possible by only creating dependencies when truly needed
+
+5. NOT ALL WORLD STATE INFORMATION IS NEEDED TO ACCOMPLISH THE GOAL, FEEL FREE TO IGNORE IRRELEVANT WORLD STATE INFORMATION. 

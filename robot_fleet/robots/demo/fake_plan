@@ -1,0 +1,28 @@
+robotctl register /Users/trevorasbery/Desktop/AgenticNet/multirobot-task/robot_fleet/robots/demo/hsr/fake_hsr.yaml fake_hsr
+robotctl register /Users/trevorasbery/Desktop/AgenticNet/multirobot-task/robot_fleet/robots/demo/locobot/fake_locobot.yaml fake_locobot
+
+
+robotctl task add "HSR navigate to the kitchen" --robot-id fake_hsr --goal-id 2 --plan-id 6 --robot-type HSR
+robotctl task add "Locobot navigate to the kitchen" --robot-id fake_locobot --goal-id 2 --plan-id 6 --robot-type Locobot
+robotctl task add "HSR pick up the first cup" --robot-id fake_hsr --goal-id 2 --plan-id 6 --robot-type HSR --dependencies 50
+robotctl task add "HSR place the first cup into the Locobot's basket" --robot-id fake_hsr --goal-id 2 --plan-id 6 --robot-type HSR --dependencies 51,52
+robotctl task add "Locobot navigates to the hallway" --robot-id fake_locobot --goal-id 2 --plan-id 6 --robot-type Locobot --dependencies 53
+robotctl task add "HSR pick up the second cup" --robot-id fake_hsr --goal-id 2 --plan-id 6 --robot-type HSR --dependencies 53
+robotctl task add "Locobot arrives at the hallway and completes delivery of the first cup" --robot-id fake_locobot --goal-id 2 --plan-id 6 --robot-type Locobot --dependencies 54
+robotctl task add "HSR navigates to the living room" --robot-id fake_hsr --goal-id 2 --plan-id 6 --robot-type HSR --dependencies 55
+robotctl task add "HSR place the second cup in the living room" --robot-id fake_hsr --goal-id 2 --plan-id 6 --robot-type HSR --dependencies 56
+
+
+-- Plan: 6
+--   Strategy: BIG_DAG
+--   Allocation: LLM
+--   Tasks (DAG View):
+--     ├─ (G1, T1, hsr): HSR navigates to the kitchen
+--     ├─ (G2, T2, locobot): Locobot navigates to the kitchen
+--     ├─ (G1, T3, hsr): HSR picks up the first cup (depends on T1)
+--     ├─ (G1, T4, hsr): HSR places the first cup into the Locobot's basket (depends on T2, T3)
+--     ├─ (G1, T5, locobot): Locobot navigates to the hallway (depends on T4)
+--     ├─ (G2, T6, hsr): HSR picks up the second cup (depends on T4)
+--     ├─ (G1, T9, locobot): Locobot arrives at the hallway and completes delivery of the first cup (depends on T5)
+--     ├─ (G2, T7, hsr): HSR navigates to the living room (depends on T6)
+--     └─ (G2, T8, hsr): HSR places the second cup in the living room (depends on T7)

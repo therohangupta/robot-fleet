@@ -1,0 +1,17 @@
+{goals_context}
+
+{robot_context}
+
+STATEMENTS ABOUT THE WORLD:
+{world_statements}
+
+Generate a sequential plan that addresses all the goals above.
+Tasks from different goals can be interleaved, but NO parallelism is allowed.
+Each task should depend on the previous task(s).
+
+For the first task, use an empty dependency_task_ids list.
+For subsequent tasks, make each depend on relevant previous tasks.
+
+Important: Since task IDs will be assigned by the database, in your dependency_task_ids,
+use zero-based indices that represent the position of the task in your tasks array
+(e.g., task at index 1 depends on task at index 0, so dependency_task_ids = [0]). 

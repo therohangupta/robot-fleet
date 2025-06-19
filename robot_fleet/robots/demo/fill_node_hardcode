@@ -1,0 +1,25 @@
+robotctl register /Users/rohangupta/Desktop/Workspace/glamor/multirobot-task/robot_fleet/robots/demo/hsr/hsr.yaml hsr
+robotctl register /Users/rohangupta/Desktop/Workspace/glamor/multirobot-task/robot_fleet/robots/demo/locobot/locobot.yaml locobot
+robotctl goal add "Find a bottle somewhere and bring it to the hallway."
+robotctl world add "The HSR starts at an unknown location holding nothing in its gripper."
+robotctl world add "The Locobot starts at an unknown location and started with no objects in its basket."
+robotctl world add "There is a kitchen, a living room and a hallway."
+robotctl world add "The locations of objects start out unknown."
+
+# 1. HSR: Go to kitchen
+robotctl task add "HSR goes to the kitchen." --goal-id 1 --plan-id 1 --robot-id hsr --robot-type hsr
+
+# 2. Locobot: Go to living room
+robotctl task add "Locobot goes to the living room." --goal-id 1 --plan-id 1 --robot-id locobot --robot-type locobot
+
+# 3. HSR: Search for a cup in the kitchen
+robotctl task add "HSR searches for a bottle in the kitchen." --goal-id 1 --plan-id 1 --robot-id hsr --dependencies 1 --robot-type hsr
+
+# 4. Locobot: Search for a cup in the hallway (after cup is placed in basket) (should return replan flag here)
+robotctl task add "Locobot searches for a bottle in the living room." --goal-id 1 --plan-id 1 --robot-id locobot --dependencies 2 --robot-type locobot
+
+# 5. Locobot: Go (after locobot leaves kitchen)
+robotctl task add "Locobot goes to the hallway." --goal-id 1 --plan-id 1 --robot-id locobot --dependencies 4 --robot-type locobot
+
+# 6. Locobot: Go (after locobot leaves kitchen)
+robotctl task add "Locobot searches for a bottle in the hallway." --goal-id 1 --plan-id 1 --robot-id locobot --dependencies 5 --robot-type locobot
