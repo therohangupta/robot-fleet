@@ -250,19 +250,3 @@ GRANT ALL PRIVILEGES ON DATABASE robot_fleet TO robot_user;
 GRANT ALL ON SCHEMA public TO robot_user;
 \q
 ```
-
-
-# current directory structure
-/agents — for any LLM/VLM based agents that robots can run
-/data — any kind of data, from episodes to vector databases
-/models —  not sure yet but maybe stuff in between agents and end-to-end policies for skills
-/robot_control — how robots communicate and have low-level control over their actions. Likely to implement ROS of some kind for each robot
-/robots — a directory containing all the information for supported robots, will maintain information for each robot that allows the highest level of abstraction in all other modules
----- /bimanual
----- /locobot
----- /toyota_hri
-/skills — a directory of policies trained on specific tasks for each robot and are tagged with relevant keywords for that skill
-/utils — all random useful things
-
-server.py - for running the central server
-start_robots.py — for running each individual robot 
