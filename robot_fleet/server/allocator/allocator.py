@@ -3,7 +3,7 @@ from abc import ABC, abstractmethod
 from typing import Dict
 import logging
 from robot_fleet.robots.registry.instance_registry import RobotInstanceRegistry
-from .formats.formats import Allocation, RobotTask
+from ..planner.formats.formats import Allocation, RobotTask
 from typing import Optional
 logger = logging.getLogger(__name__)
 
@@ -241,7 +241,7 @@ class LPAllocator(AllocatorBase):
             except Exception as e:
                 print(f"Failed to assign robot {a['robot_id']} to task {a['task_id']}: {e}")
         # Return as Allocation object (for compatibility)
-        from .formats.formats import Allocation, RobotTask
+        from ..planner.formats.formats import Allocation, RobotTask
         allocation_obj = Allocation(allocations=[RobotTask(**a) for a in allocation])
         return allocation_obj
 

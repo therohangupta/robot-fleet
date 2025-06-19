@@ -202,7 +202,7 @@ class Replanner(BasePlanner):
                 logger.info(f"Successfully saved new replan with ID: {new_plan_id} to the database.")
 
                 # Call the allocator to assign robots to the new tasks
-                from ..allocator import LLMAllocator
+                from ...allocator.allocator import LLMAllocator
                 allocator = LLMAllocator(db_url=self.db_url if self.db_url else "postgresql+asyncpg://robot_user:secret@localhost:5432/robot_fleet")
                 await allocator.registry.initialize()  # Initialize the allocator's registry
                 allocation_result = await allocator.allocate(new_plan_id)

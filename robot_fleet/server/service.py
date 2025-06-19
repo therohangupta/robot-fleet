@@ -707,7 +707,7 @@ class FleetManagerService(fleet_manager_pb2_grpc.FleetManagerServicer):
             
             # Normal flow using the planner
             from robot_fleet.server.planner.planner import get_planner
-            from robot_fleet.server.planner.allocator import get_allocator
+            from robot_fleet.server.allocator.allocator import get_allocator
             planner = get_planner(planning_strategy)
             print(f"Using planner: {planner}")
             allocator = get_allocator(allocation_strategy)

@@ -9,7 +9,7 @@ from abc import ABC, abstractmethod
 from robot_fleet.robots.registry.instance_registry import RobotInstanceRegistry
 from .formats.formats import Plan, DAGPlan, TaskPlanItem, Allocation, RobotTask
 import logging
-from .allocator import AllocatorBase, LLMAllocator, LPAllocator
+from ..allocator.allocator import AllocatorBase, LLMAllocator, LPAllocator
 from dotenv import load_dotenv
 from pathlib import Path
 
