@@ -7,7 +7,6 @@ It consists of two main components:
 """
 
 from .robots import RobotServerBase, TaskResult
-from .robots.containers.manager import ContainerManager, ContainerInfo
 
 __all__ = [
     # Robot base classes and implementations

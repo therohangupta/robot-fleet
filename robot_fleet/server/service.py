@@ -9,7 +9,6 @@ from ..proto import fleet_manager_pb2
 from ..proto import fleet_manager_pb2_grpc
 from ..robots.registry.instance_registry import RobotInstanceRegistry
 from ..robots.registry.models import Base
-from ..robots.containers.manager import ContainerManager
 from datetime import datetime, timedelta
 from sqlalchemy import text
 
@@ -62,7 +61,7 @@ class FleetManagerService(fleet_manager_pb2_grpc.FleetManagerServicer):
             db_url: PostgreSQL connection URL. If None, uses default connection.
         """
         self.registry = RobotInstanceRegistry(db_url=db_url)
-        self.container_manager = ContainerManager()
+        # self.container_manager = ContainerManager()
         self._streams_contexts = {}  # Store stream contexts by robot_id
         self._session_contexts = {}  # Store session contexts by robot_id
         
