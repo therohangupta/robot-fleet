@@ -3,7 +3,7 @@ from abc import ABC, abstractmethod
 from typing import Dict
 import logging
 from robot_fleet.robots.registry.instance_registry import RobotInstanceRegistry
-from ..planner.formats.formats import Allocation, RobotTask
+from robot_fleet.server.formats.formats import Allocation, RobotTask
 from typing import Optional
 logger = logging.getLogger(__name__)
 

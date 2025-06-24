@@ -4,8 +4,6 @@ import time
 import threading
 import requests
 
-STATUS_PATH = "/tmp/locobot_status.txt"
-DONE_PATH = "/tmp/locobot_done.txt"
 
 def main():
     if len(sys.argv) < 2:
@@ -32,4 +30,5 @@ def main():
 if __name__ == "__main__":
     main()
 
-# alias hsr="python3 /root/TEMP/telemoma/telemoma/robot_interface/robot_fleet_server/hsr_client.py"
+# pip install openai fastapi dotenv uvicorn ultralytics
+# To run: uvicorn locobot_server:app --host 0.0.0.0 --port 5001
