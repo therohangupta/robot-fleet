@@ -90,9 +90,11 @@ psql -U robot_user -d robot_fleet -h localhost
 
 From the project root directory:
 
+start a venv and make sure all requirements are installed 
 ```bash
-# Make sure to kill any existing server instances first
-pkill -f "python3 -m robot_fleet.server"
+source venv/bin/activate
+
+pip install -r requirements
 
 # Start the server
 python3 -m robot_fleet.server
@@ -101,185 +103,146 @@ python3 -m robot_fleet.server
 The server will start on port 50051 by default. Check for successful initialization:
 - The server should print "Starting Robot Fleet Management Server on port 50051"
 - Initial database tables will be created automatically
-- Test writes will confirm database access
 
-## Building Docker Images for Robot Types
+## Building and Running Example Robot Docker Containers
 
-### Building the Pick-Place Robot Image
+To build and run all example robot containers for testing and development, use the provided scripts. This is the recommended way to set up the example robots.
 
-The example YAML configuration in `robot_fleet/robots/examples/pick_place/pick_place.yaml` references a Docker image `robotfleet/pick-place:1.0`. Here's how to build it:
+### 1. Make Scripts Executable
 
-1. Navigate to the example directory:
-
-```bash
-cd robot_fleet/robots/examples/pick_place
-```
-
-2. Build the Docker image from the project root:
+Before running the scripts, ensure they are executable:
 
 ```bash
-# From the project root directory
-docker build -t robotfleet/pick-place:1.0 -f robot_fleet/robots/examples/pick_place/Dockerfile .
+chmod +x robot_fleet/scripts/*
 ```
 
-3. Verify the image is built:
+### 2. Build All Example Robot Docker Images
+
+Run the following script to build Docker images for all example robots (pick_place, nav, moma):
+
 ```bash
-docker images | grep robotfleet
+robot_fleet/scripts/rebuild_examples_docker.sh
 ```
 
-You should see the image `robotfleet/pick-place:1.0` in the list.
+This will build and tag each image appropriately for use with the fleet manager.
+
+### 3. Start All Example Robot Containers
+
+To launch all example robot containers in detached mode, run:
+
+```bash
+robot_fleet/scripts/run_examples_docker.sh
+```
+
+This will start each robot container and map the appropriate ports as defined in their configuration files.
+
+### 4. Stopping Example Containers
+
+To stop the running example containers, you can use:
+
+```bash
+docker stop pick_place_robot nav_robot moma_robot
+```
+
+Or stop all running containers (use with caution):
+
+```bash
+docker stop $(docker ps -q)
+```
 
 ## Using the CLI
 
 The `robotctl` command is the main interface for interacting with the robot fleet.
 
-### Register a Robot
+**For a full CLI reference, see [`robot_fleet/cli/ROBOTCTL_CLI.md`](robot_fleet/cli/ROBOTCTL_CLI.md).**
+
+### Register a Robot (Pick Place)
 
 ```bash
 # Navigate to a directory with the robot config file
 cd robot_fleet/robots/examples/pick_place
 
 # Register a robot
-robotctl register pick_place.yaml my-robot-1
+robotctl register pick_place.yaml pick_place
+# Or bulk register
+robotctl register pick_place.yaml --num 3
 ```
 
+### Create Plans
+
+Once you have the docker containers running in the example, and all 3 robots are registered, you can start to generate plans with the robots and the world state items.
+
+Here is an example if you had two goal's with goal ids 1 and 2, and you wanted to use the dag planning strategy and llm allocation strategy
+
+```bash
+robotctl plan create dag llm 1,2
+```
+
+### Start Plans
+
+Run the following command with the appropriate plan id, and the plan will start executing and sending the natural language tasks one after another to the robot servers, waiting on dependencies.
+
+```bash
+robotctl plan start 1
+```
+
+### Other CLI Actions
 ### List Robots
 
 ```bash
-# List all registered robots
 robotctl list
-```
-
-### Check Robot Status
-
-```bash
-# Get the status of a specific robot
-robotctl status my-robot-1
-```
-
-### Deploy a Robot
-
-```bash
-# Deploy a registered robot
-robotctl deploy my-robot-1
-```
-
-### Undeploy a Robot
-
-```bash
-# Undeploy a robot
-robotctl undeploy my-robot-1
 ```
 
 ### Unregister a Robot
 
 ```bash
-# Unregister a robot
-robotctl unregister my-robot-1
+robotctl unregister pick_place
 ```
 
 ### Manage Goals
 
 ```bash
-# Add a new goal
 robotctl goal add "Move all boxes from warehouse A to B"
-
-# List all goals
 robotctl goal list
-
-# Get details of a specific goal
-robotctl goal get 1
-
-# Delete a goal
+robotctl goal get 1 --verbose
 robotctl goal delete 1
 ```
 
 ### Manage Tasks
 
 ```bash
-# Add a new task (with optional goal association)
-robotctl task add --robot-id robot1 "Move to coordinates (x,y)"
-robotctl task add --robot-id robot1 --goal-id 1 "Pick up box from location A"
-
-# List all tasks
+robotctl task add "Move to coordinates (x,y)" --goal-id 1 --plan-id 1 --robot-id robot1 --robot-type nav
 robotctl task list
-
-# List tasks for a specific robot
 robotctl task list --robot-id robot1
-
-# List tasks for a specific goal
 robotctl task list --goal-id 1
-
-# Get details of a specific task
-robotctl task get 1
-
-# Delete a task
+robotctl task get 1 --verbose
 robotctl task delete 1
 ```
 
-## Troubleshooting
 
-### Server Issues
+### Manage World Statements
 
-If you encounter issues with the server:
-
-1. Check for existing server processes:
 ```bash
-lsof -i :50051
+robotctl world add "Box A is at location X"
+robotctl world list
+robotctl world get 123
+robotctl world delete 123
 ```
 
-2. Kill any existing server processes:
+### Manage Plans
+
 ```bash
-pkill -f "python3 -m robot_fleet.server"
-```
-
-3. Check PostgreSQL connection:
-```bash
-psql -U robot_user -d robot_fleet -h localhost
-```
-
-4. Check server logs for detailed error messages
-
-### Docker Issues
-
-If deployment fails:
-
-1. Verify Docker is running:
-```bash
-docker ps
-```
-
-2. Check if the image exists:
-```bash
-docker images | grep robotfleet
-```
-
-3. Check if the container is already running:
-```bash
-docker ps -a | grep my-robot-1
-```
-
-4. Make sure Docker daemon is accessible:
-```bash
-# For local Docker
-docker info
-
-# For remote Docker (specified in deployment config)
-docker -H tcp://hostname:port info
+robotctl plan create dag llm 1,2,3
+robotctl plan list
+robotctl plan get 1 --verbose
+robotctl plan get 1 --analyze-idle
+robotctl plan delete 1
 ```
 
 ### Database Reset
 
-To completely reset the database:
+To completely reset the database, restart the server like this:
 
 ```bash
-psql postgres
-
-# In PostgreSQL prompt:
-DROP DATABASE robot_fleet;
-CREATE DATABASE robot_fleet;
-GRANT ALL PRIVILEGES ON DATABASE robot_fleet TO robot_user;
-\c robot_fleet
-GRANT ALL ON SCHEMA public TO robot_user;
-\q
+python3 -m robot_fleet.server --reset-db
 ```
