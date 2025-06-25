@@ -48,6 +48,7 @@ The `capabilities` are used by high level planners and allocators in LLM prompts
 
 The only difference between the `fake_` and regular robot yaml files is the `taskServer.host` — the fake robot will be runnable on your localhost while the actual robot has a different host IP. 
 
+### Client, Server, and Tools
 
 Every robot has its own `[robot name]_client.py`, `[robot name]_server.py`, and `[robot name]_tools.py`. 
 
