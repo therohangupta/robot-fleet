@@ -9,7 +9,7 @@ Generates task plans from high-level goals.
 
 **Strategies:**
 - **Monolithic**: Single sequential plan for all goals (tightly coupled scenarios)
-- **DAG**: Separate DAG plans for each goal (independent, parallel execution)
+- **Per-Goal DAG + Aggregation**: Separate DAG plans for each goal (independent, parallel execution)
 - **Big DAG**: Single comprehensive DAG for multiple goals (complex interdependencies)
 
 ### Allocator
