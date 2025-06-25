@@ -70,3 +70,5 @@ coverage.xml
 .idea/
 *.sublime-workspace
 *.sublime-project 
+
+.env
