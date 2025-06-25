@@ -37,8 +37,7 @@ def main():
     task_description = sys.argv[1]
     url = "http://localhost:5001/do_task"
     payload = {
-        "task_description": task_description,
-        "parameters": {}
+        "task_description": task_description
     }
 
     print(f"🚀 Sending task: {task_description}")
@@ -58,5 +57,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-# alias hsr="python3 /root/TEMP/telemoma/telemoma/robot_interface/robot_fleet_server/hsr_client.py"

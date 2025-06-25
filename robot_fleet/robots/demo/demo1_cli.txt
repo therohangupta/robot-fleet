@@ -1,10 +1,10 @@
 robotctl register /Users/trevorasbery/Desktop/AgenticNet/multirobot-task/robot_fleet/robots/demo/hsr/hsr.yaml fake_hsr
 robotctl register /Users/trevorasbery/Desktop/AgenticNet/multirobot-task/robot_fleet/robots/demo/locobot/locobot.yaml fake_locobot
-robotctl goal add "bring the first cup to the hallway"
-robotctl goal add "bring the second cup to the living room"
+robotctl goal add "bring the first cup to the hallway" # becomes goal with id 1
+robotctl goal add "bring the second cup to the living room" # becomes goal with id 2
 robotctl world add "The HSR is in an unknown location"
 robotctl world add "The Locobot is in an unknown location"
 robotctl world add "There is a kitchen, a living room and a hallway."
 robotctl world add "The kitchen has 2 cups."
-robotctl plan create big_dag llm 1,2
+robotctl plan create big_dag llm 1,2 # 1,2 refers to the goals we want to create a plan to solve
 
