@@ -1,6 +1,39 @@
-# Robot Fleet Management System
+# RobotFleet: An Open-Source Framework for Centralized Multi-Robot Task Planning
 
-A distributed system for managing a fleet of robots with PostgreSQL backend.
+RobotFleet is an open-source framework for centralized multi-robot task planning and scheduling, designed to coordinate heterogeneous fleets using modular components and LLM-based planning. Whether you're working with mobile manipulators, navigation robots, or custom agents, RobotFleet helps you scale multi-robot operations with ease.
+
+
+## Key Features
+
+- Centralized Task Planning with support for multi-goal missions.
+- LLM-Driven Planning: Converts natural language goals into dependency-aware task plans.
+- Modular Architecture: Planner, allocator, and executors are all easily swappable.
+- Containerized Robots: Deploy each robot as a Docker service for scalable fleet management.
+- Dynamic World State: Maintain and update a declarative world model in real-time.
+- Supports Replanning: React to execution feedback and dynamically reallocate tasks.
+
+## Architecture
+RobotFleet consists of three major components:
+
+1. Task Planner: 
+Converts high-level goals into task DAGs using different LLM prompting strategies:
+- Monolithic Prompt
+- Big DAG
+- Per-Goal DAG
+
+2. Task Allocator: 
+Assigns tasks within DAGs to robots using:
+- LLM-based reasoning
+- Mixed-Integer Linear Programming (MILP)
+
+3. Task Status and Schedule Manager:
+The actual management of the task plan/schedule that sends natural language commands to each robot and maintains the status of each robot. 
+
+4. On-Robot Task Executors
+A standard set of functions that can run on robots to execute the tasks they are given. Effectively, a task-to-action module that returns statuses of task successes and failures back to the central planner. See `robots/demo/README.md` for how different robots implement this.
+
+![RobotFleet Diagram](/Diagram.png)
+
 
 ## Setup
 
