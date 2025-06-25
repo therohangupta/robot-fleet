@@ -57,5 +57,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-# alias hsr="python3 /root/TEMP/telemoma/telemoma/robot_interface/robot_fleet_server/hsr_client.py"

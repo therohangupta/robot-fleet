@@ -1,5 +1,0 @@
-robotctl register locobot/locobot.yaml locobot
-robotctl goal add "find a cup in the area"
-robotctl task add "go to the kitchen and see if there is a cup" --goal-id 1 --plan-id 1 --robot-id locobot
-robotctl task add "go to the living room and see if there is a cup" --goal-id 1 --plan-id 1 --robot-id locobot --dependencies 1
-robotctl task add "go to the hallway and see if there is a cup" --goal-id 1 --plan-id 1 --robot-id locobot --dependencies 2

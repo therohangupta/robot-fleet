@@ -172,8 +172,6 @@ locobot_robot = Locobot(robot_id=os.getenv("ROBOT_ID", "locobot_demo"), port=int
 @app.post("/do_task")
 async def do_task(request: TaskRequest):
     result = await locobot_robot._execute_task(request.task_description)
-    # if not result.success:
-    #     raise HTTPException(status_code=500, detail=result.message)
     return result
 
 # pip install openai fastapi dotenv uvicorn ultralytics

@@ -29,6 +29,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-# pip install openai fastapi dotenv uvicorn ultralytics
-# To run: uvicorn locobot_server:app --host 0.0.0.0 --port 5001

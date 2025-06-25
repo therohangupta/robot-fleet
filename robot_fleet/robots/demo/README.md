@@ -46,6 +46,9 @@ capabilities:
 The `metadata` has properties such as `name` and `description` which can be used but are more for your own information rather than anything RobotFleet may use.  
 The `capabilities` are used by high level planners and allocators in LLM prompts. These can guide and assist the LLM with generating plans that make sense for the robots.
 
+The only difference between the `fake_` and regular robot yaml files is the `taskServer.host` — the fake robot will be runnable on your localhost while the actual robot has a different host IP. 
+
+
 Every robot has its own `[robot name]_client.py`, `[robot name]_server.py`, and `[robot name]_tools.py`. 
 
 - `[robot name]_tools.py`: These include a set of functions that are defined as tools for an LLM. Each of these functions will encode a capability for the robot, such as `navigate`, `rotate`, `segment_for_objects`, `capture_image`, etc. that each implement the lowest level of code on each robot. These capabilities will have very similar type signatures and parameters across many embodiments. For example, the HSR's `navigate` function is as follows: 
@@ -105,4 +108,25 @@ class RobotName(RobotServerBase):
 It's as simple as that — define your own functions in tools, import and use them within `_execute_task`it into the server file, and return it as a TaskResult. We hope to support more functions in `[robot name]_tools.py` that you can easily modify.
 
 
+## Experiments
 
+In the demo, we asked the fleet to achieve 2 goals: "bring the first cup to the hallway" and "bring the second cup to the living room", and we specified the world state as follows: 
+- "The HSR is in an unknown location"
+- "The Locobot is in an unknown location"
+- "There is a kitchen, a living room and a hallway."
+- "The kitchen has 2 cups."
+
+Our world state is currently a 2D semantic map as defined in locations plus some text statements about the environment. 
+
+If you look at `demo1_cli.txt`, we specify the above using the command line (see the main RobotFleet README.md for how that's used) and create a plan using our BigDAG planning strategy and LLM allocation strategy. The generated plan can be seen in `demo1_generated_plan.txt`. 
+
+The way to interpret the Tasks (DAG View) triples:
+- "G#": the first element in the triple which represents the goal a task is most relevant to solving
+- "T#": the second element in the triple which represents a unique identifier for the task (just ascending order)
+- robot-id: the third element in the triple, just a unique identifer for a robot in your fleet
+
+Each task also will say what tasks it depends on, forming that DAG structure. The task description is the actual natural language instruction sent to that robot-id.
+
+In `demo1_execution.txt`, we display the logs that the central planner received as it was maintaining the status of various robots in the fleet and their tasks. This demo matches with the demo video exactly, though the video paraphrases the instructions for brevity. Take a look and you will see how the DAG plan is executed and statuses are logged every few seconds. At the very end, it says `Plan 1 completed successfully`, indicating every task in the DAG successfully executed. 
+
+In `hardcode_tasks.txt`, we show how to use the CLI to manually hardcode the plan's tasks. This is manual hardcoding, so no planning or allocation strategy is used.

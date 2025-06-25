@@ -162,10 +162,6 @@ hsr_robot = HSR(robot_id=os.getenv("ROBOT_ID", "hsr_demo"), port=int(os.getenv("
 @app.post("/do_task")
 async def do_task(request: TaskRequest):
     result = await hsr_robot._execute_task(request.task_description)
-
-    ### This is how you handle successes for your robot. Usually 
-    # if not result.success:
-    #     raise HTTPException(status_code=500, detail=result.message)
     return result
 
 # pip install openai fastapi dotenv uvicorn ultralytics
