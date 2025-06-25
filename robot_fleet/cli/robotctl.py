@@ -134,45 +134,45 @@ def register(config_file, robot_id, num):
     finally:
         client.close()
 
-@cli.command()
-@click.argument('robot_id')
-def deploy(robot_id):
-    """Deploy a robot container to a robot (NOT YET IMPLEMENTED)
+# @cli.command()
+# @click.argument('robot_id')
+# def deploy(robot_id):
+#     """Deploy a robot container to a robot (NOT YET IMPLEMENTED)
 
-    Example:
-      robotctl deploy my_robot_id
-    """
-    if not robot_id:
-        raise click.UsageError("You must provide a robot_id. Example: robotctl deploy my_robot_id")
-    try:
-        client = FleetManagerClient()
-        response = client.deploy_robot(robot_id)
-        print_response(response)
-    except Exception as e:
-        click.echo(f"Error: {str(e)}", err=True)
-        sys.exit(1)
-    finally:
-        client.close()
+#     Example:
+#       robotctl deploy my_robot_id
+#     """
+#     if not robot_id:
+#         raise click.UsageError("You must provide a robot_id. Example: robotctl deploy my_robot_id")
+#     try:
+#         client = FleetManagerClient()
+#         response = client.deploy_robot(robot_id)
+#         print_response(response)
+#     except Exception as e:
+#         click.echo(f"Error: {str(e)}", err=True)
+#         sys.exit(1)
+#     finally:
+#         client.close()
 
-@cli.command()
-@click.argument('robot_id')
-def undeploy(robot_id):
-    """Undeploy a robot container from a robot (NOT YET IMPLEMENTED)
+# @cli.command()
+# @click.argument('robot_id')
+# def undeploy(robot_id):
+#     """Undeploy a robot container from a robot (NOT YET IMPLEMENTED)
 
-    Example:
-      robotctl undeploy my_robot_id
-    """
-    if not robot_id:
-        raise click.UsageError("You must provide a robot_id. Example: robotctl undeploy my_robot_id")
-    try:
-        client = FleetManagerClient()
-        response = client.undeploy_robot(robot_id)
-        print_response(response)
-    except Exception as e:
-        click.echo(f"Error: {str(e)}", err=True)
-        sys.exit(1)
-    finally:
-        client.close()
+#     Example:
+#       robotctl undeploy my_robot_id
+#     """
+#     if not robot_id:
+#         raise click.UsageError("You must provide a robot_id. Example: robotctl undeploy my_robot_id")
+#     try:
+#         client = FleetManagerClient()
+#         response = client.undeploy_robot(robot_id)
+#         print_response(response)
+#     except Exception as e:
+#         click.echo(f"Error: {str(e)}", err=True)
+#         sys.exit(1)
+#     finally:
+#         client.close()
 
 @cli.command()
 @click.argument('robot_id')
