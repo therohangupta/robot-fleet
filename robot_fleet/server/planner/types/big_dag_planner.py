@@ -7,7 +7,7 @@ from typing import List, Dict, Any
 import os
 from openai import OpenAI
 from ..planner import BasePlanner
-from ..formats.formats import Plan, DAGPlan, DAGNode, TaskPlanItem
+from robot_fleet.server.formats.formats import Plan, DAGPlan, DAGNode, TaskPlanItem
 
 class BigDAGPlanner(BasePlanner):
     """

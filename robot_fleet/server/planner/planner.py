@@ -7,7 +7,7 @@ from enum import Enum
 from typing import List, Dict, Optional, Any, Set
 from abc import ABC, abstractmethod
 from robot_fleet.robots.registry.instance_registry import RobotInstanceRegistry
-from .formats.formats import Plan, DAGPlan, TaskPlanItem, Allocation, RobotTask
+from robot_fleet.server.formats.formats import Plan, DAGPlan, TaskPlanItem, Allocation, RobotTask
 import logging
 from ..allocator.allocator import AllocatorBase, LLMAllocator, LPAllocator
 from dotenv import load_dotenv

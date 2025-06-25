@@ -1,5 +1,5 @@
 from robot_fleet.robots.client.robot_client import RobotClient
-from robot_fleet.server.planner.formats.formats import AllocatedDAGNode, AllocatedDAGPlan
+from robot_fleet.server.formats.formats import AllocatedDAGNode, AllocatedDAGPlan
 from robot_fleet.robots.registry.instance_registry import RobotInstanceRegistry
 import asyncio
 from typing import Optional

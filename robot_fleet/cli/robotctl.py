@@ -27,6 +27,8 @@ import asyncio
 
 def load_robot_config(config_file: str) -> dict:
     """Load and validate robot configuration from YAML file"""
+    if not config_file:
+        raise click.UsageError("You must provide a config file path. Example: robotctl register my_robot.yaml")
     try:
         validator = YAMLValidator()
         return validator.validate_file(config_file)
@@ -36,7 +38,12 @@ def load_robot_config(config_file: str) -> dict:
 
 @click.group()
 def cli():
-    """Robot fleet management CLI"""
+    """Robot fleet management CLI
+
+    Example usage:
+      robotctl register my_robot.yaml
+      robotctl plan create dag llm 1
+    """
     pass
 
 @cli.command()
@@ -44,7 +51,14 @@ def cli():
 @click.argument('robot_id', required=False)
 @click.option('--num', '-n', default=1, show_default=True, type=int, help="Number of robots to register")
 def register(config_file, robot_id, num):
-    """Register a new robot. Optionally register multiple robots with --num."""
+    """Register a new robot. Optionally register multiple robots with --num.
+
+    Example:
+      robotctl register my_robot.yaml my_robot_id
+      robotctl register my_robot.yaml --num 3
+    """
+    if not config_file:
+        raise click.UsageError("You must provide a config file. Example: robotctl register my_robot.yaml")
     try:
         # Load robot config
         config = load_robot_config(config_file)
@@ -123,7 +137,13 @@ def register(config_file, robot_id, num):
 @cli.command()
 @click.argument('robot_id')
 def deploy(robot_id):
-    """Deploy a registered robot"""
+    """Deploy a robot container to a robot (NOT YET IMPLEMENTED)
+
+    Example:
+      robotctl deploy my_robot_id
+    """
+    if not robot_id:
+        raise click.UsageError("You must provide a robot_id. Example: robotctl deploy my_robot_id")
     try:
         client = FleetManagerClient()
         response = client.deploy_robot(robot_id)
@@ -137,7 +157,13 @@ def deploy(robot_id):
 @cli.command()
 @click.argument('robot_id')
 def undeploy(robot_id):
-    """Undeploy a robot"""
+    """Undeploy a robot container from a robot (NOT YET IMPLEMENTED)
+
+    Example:
+      robotctl undeploy my_robot_id
+    """
+    if not robot_id:
+        raise click.UsageError("You must provide a robot_id. Example: robotctl undeploy my_robot_id")
     try:
         client = FleetManagerClient()
         response = client.undeploy_robot(robot_id)
@@ -151,7 +177,13 @@ def undeploy(robot_id):
 @cli.command()
 @click.argument('robot_id')
 def unregister(robot_id):
-    """Unregister a robot"""
+    """Unregister a robot
+
+    Example:
+      robotctl unregister my_robot_id
+    """
+    if not robot_id:
+        raise click.UsageError("You must provide a robot_id. Example: robotctl unregister my_robot_id")
     try:
         client = FleetManagerClient()
         response = client.unregister_robot(robot_id)
@@ -167,7 +199,12 @@ def unregister(robot_id):
               default='all', help="Filter robot list")
 @click.option('-v', '--verbose', is_flag=True, help="Show detailed robot and task info")
 def list(filter_type, verbose):
-    """List all robots"""
+    """List all robots
+
+    Example:
+      robotctl list
+      robotctl list --filter deployed
+    """
     try:
         client = FleetManagerClient()
         response = client.list_robots(filter_type)
@@ -194,7 +231,13 @@ def list(filter_type, verbose):
 @click.argument('robot_id')
 @click.option('-v', '--verbose', is_flag=True, help="Show detailed robot and task info")
 def status(robot_id, verbose):
-    """Get detailed status of a robot"""
+    """Get detailed status of a robot
+
+    Example:
+      robotctl status my_robot_id
+    """
+    if not robot_id:
+        raise click.UsageError("You must provide a robot_id. Example: robotctl status my_robot_id")
     try:
         client = FleetManagerClient()
         status = client.get_robot_status(robot_id)
@@ -476,10 +519,17 @@ def plan():
 @plan.command()
 @click.argument('planning_strategy', type=click.Choice(PLANNING_STRATEGY_CHOICES, case_sensitive=False))
 @click.argument('allocation_strategy', type=click.Choice(ALLOCATION_STRATEGY_CHOICES, case_sensitive=False))
-@click.argument('goal_ids', required=True,type=str)
+@click.argument('goal_ids', required=True, type=str)
 @click.option('-v', '--verbose', is_flag=True, help="Show detailed plan, goal, and task info")
 def create(planning_strategy, allocation_strategy, goal_ids, verbose):
-    """Create a new plan with planning strategy, allocator, and goal IDs"""
+    """Create a new plan with planning strategy, allocator, and goal IDs
+
+    Example:
+      robotctl plan create dag llm 1
+      robotctl plan create monolithic llm 1,2,3
+    """
+    if not planning_strategy or not allocation_strategy or not goal_ids:
+        raise click.UsageError("You must provide planning_strategy, allocation_strategy, and goal_ids. Example: robotctl plan create dag llm 1")
     client = None
     try:
         # Parse the comma-separated string into a list of ints

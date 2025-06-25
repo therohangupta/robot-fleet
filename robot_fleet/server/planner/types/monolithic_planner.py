@@ -6,7 +6,7 @@ import json
 from openai import OpenAI
 import os
 from ..planner import BasePlanner
-from ..formats.formats import Plan
+from robot_fleet.server.formats.formats import Plan
 from typing import List
 
 class MonolithicPlanner(BasePlanner):

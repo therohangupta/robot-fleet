@@ -7,7 +7,7 @@ from openai import OpenAI
 import os
 from typing import List, Dict, Any
 from ..planner import BasePlanner
-from ..formats.formats import Plan, DAGPlan, DAGNode, TaskPlanItem
+from robot_fleet.server.formats.formats import Plan, DAGPlan, DAGNode, TaskPlanItem
 
 class DAGPlanner(BasePlanner):
     """Planner that uses a DAG-based approach to generate plans"""

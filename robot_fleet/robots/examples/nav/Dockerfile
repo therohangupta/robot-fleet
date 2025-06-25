@@ -2,28 +2,35 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-# Copy the entire project first
+# Install system dependencies for venv and build
+RUN apt-get update && apt-get install -y python3-venv build-essential && rm -rf /var/lib/apt/lists/*
+
+# Create venv in a clean location before copying files
+RUN python -m venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
+
+# Copy only necessary files
 COPY ../../../.. /app/
 
-# Install dependencies
-RUN pip install -r requirements.txt
+# Set environment variables for robot config and id
+ENV ROBOT_ID=nav
+ENV CONFIG_FILE=/app/robot_fleet/robots/examples/nav/nav.yaml
 
-# Install the package in development mode
-RUN pip install -e .
+# Install dependencies using venv's pip
+RUN pip install --upgrade pip \
+    && pip install -r requirements.txt \
+    && pip install -e .
 
-# Install development dependencies
-RUN pip install pytest pytest-asyncio
+ENV PYTHONPATH=/app
 
 # Default environment variables from pick_place.yaml
-ENV ROBOT_ID=""
-ENV PORT=5001
+ENV PORT=8001
 ENV LOG_LEVEL=info
 ENV ARM_CONFIG=""
 ENV GRIPPER_CONFIG=""
-ENV PYTHONPATH=/app
 
 # Expose the robot server port
-EXPOSE 5001
+EXPOSE 8001
 
 # Run the robot server
-CMD ["python", "-m", "robot_fleet.robots.examples.nav.nav_robot"] 
+CMD python robot_fleet/robots/examples/fake_robot_server.py --robot_id $ROBOT_ID --config $CONFIG_FILE 

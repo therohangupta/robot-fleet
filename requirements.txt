@@ -13,8 +13,8 @@ sqlalchemy
 openai
 greenlet
 aiosqlite
-fastapi==0.95.2
+fastapi>=0.100.0
 uvicorn[standard]==0.22.0
 pulp
-pydantic
+pydantic>=2.0
 tabulate
