@@ -2,7 +2,7 @@
 
 In this section, we will explain our demo, showing with an example of a 2-robot fleet. We have a Toyota HSR and Locobot in our fleet. You can see our demo on both these robots here: https://youtu.be/fEF9vxRA-eU. 
 
-## General Structure of Robots
+## General Structure of Robot Directories
 Every robot has the following files that allow it to work in our multi-robot task planning and allocation framework. Here is a description of each file
 
 ### YAML
