@@ -43,14 +43,6 @@ A standard set of functions that can run on robots to execute the tasks they are
 - PostgreSQL 14+
 - Docker (for robot deployment)
 
-### Python Dependencies
-
-Install all required packages:
-
-```bash
-pip install grpc-tools protobuf sqlalchemy[asyncio] asyncpg docker pyyaml click mcp
-```
-
 ### Database Setup
 
 1. Install PostgreSQL:
