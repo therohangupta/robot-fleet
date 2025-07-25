@@ -23,7 +23,7 @@ taskServer:
   port: 5001
 
 container:
-  image: robotfleet/pick-place:1.0
+  image: robotfleet/hsr-ros2-humble:1.0
   environment:
     ROBOT_ID: ""  # Will be set when instantiating
     LOG_LEVEL: info
