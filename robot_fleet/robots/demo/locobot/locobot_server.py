@@ -108,7 +108,7 @@ class Locobot(RobotServerBase):
                 code = code.replace('namespace functions', '')
                 code = code.split("if __name__ == ")[0]
                 print(f"Generated code:\n{code}")
-                # breakpoint()
+                
                 injection = "import sys\nimport os\nsys.path.append(os.path.dirname(os.path.abspath(__file__)))\n\n"+ TOOL_IMPORT_STRING+"\n\n"
                 main_injection = """\n\nif __name__ == "__main__":
     result = main()
