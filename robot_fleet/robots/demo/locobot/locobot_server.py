@@ -178,4 +178,4 @@ async def do_task(request: TaskRequest):
     return result
 
 # pip install openai fastapi dotenv uvicorn ultralytics
-# To run: cd /root/TEMP/telemoma & uvicorn locobot_server:app --host 0.0.0.0 --port 5001
+# To start server: cd to current directory and run `uvicorn locobot_server:app --host 0.0.0.0 --port 5001`
