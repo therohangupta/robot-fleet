@@ -69,7 +69,7 @@ class Locobot(RobotServerBase):
                     tools=TOOL_DESCRIPTIONS
                 )
                 plan = planning_response.choices[0].message.content
-                # breakpoint()
+
                 print(f"Generated plan:\n{plan}")
                 plan = plan.replace("functions.", "")
                 
