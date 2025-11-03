@@ -1,4 +1,15 @@
-# RobotFleet: An Open-Source Framework for Centralized Multi-Robot Task Planning
+<h1 align="center">RobotFleet: An Open-Source Framework for Centralized Multi-Robot Task Planning</h1>
+
+<p align="center">
+  <a href="https://arxiv.org/pdf/2510.10379">Paper</a> •
+  <a href="https://youtu.be/1L4maFDmo-o">Video Overview + Demo</a> •
+  <a href="#setup">Setup</a> •
+  <a href="#running-the-server">Usage</a> •
+  <a href="#building-and-running-example-robot-docker-containers">Examples</a> •
+  <a href="#architecture">Architecture</a> •
+  <a href="#using-the-cli">CLI</a>
+</p>
+
 
 RobotFleet is an open-source framework for centralized multi-robot task planning and scheduling, designed to coordinate heterogeneous fleets using modular components and LLM-based planning. Whether you're working with mobile manipulators, navigation robots, or custom agents, RobotFleet helps you scale multi-robot operations with ease.
 
