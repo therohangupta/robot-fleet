@@ -23,8 +23,8 @@ import pdb
 import ast
 
 
-
-load_dotenv(dotenv_path="/home/elle/elle_ws/multirobot-task/.env")  # This will look for a .env file in the current directory
+# hardcoded for our .env file — change this path to match your .env file
+load_dotenv(dotenv_path="/home/elle/elle_ws/multirobot-task/.env")  # This will look for a .env file in the project root directory
 
 
 openai_api_key = os.getenv("OPENAI_API_KEY")
@@ -44,6 +44,7 @@ class Locobot(RobotServerBase):
     async def _execute_task(self, task_description: str) -> TaskResult:
         actual_task_description = task_description.split("DO THE FOLLOWING TASK:")[1].strip()
         try:
+            # currently tries to complete the task 3 times
             for i in range(3):
                 if i > 0:
                     print("___________RETRYING THE TASK___________")
@@ -51,7 +52,7 @@ class Locobot(RobotServerBase):
 
                 planning_response = await to_thread(
                     openai_client.chat.completions.create,
-                    model="gpt-4o",
+                    model="gpt-4o", # change your model if needed
                     messages=[
                         {"role": "system", "content":
                         "You are a Locobot robot high level to low level task planner. Create a high-level plan for the given task using the available functions/tools. "
@@ -71,7 +72,7 @@ class Locobot(RobotServerBase):
                 # breakpoint()
                 print(f"Generated plan:\n{plan}")
                 plan = plan.replace("functions.", "")
-                # breakpoint()
+                
                 execution_response = await to_thread(
                     openai_client.chat.completions.create,
                     model="gpt-4o",
@@ -135,13 +136,14 @@ class Locobot(RobotServerBase):
                 print("Execution stdout:\n", result.stdout)
                 print("Execution stderr:\n", result.stderr)
 
+                # Extract the result information and capture (status, msg, replan) tuple
                 task_result_string = result.stdout.split("__DONE WITH TASK__")[1]
                 task_result_string = task_result_string.strip()
                 task_result = ast.literal_eval(task_result_string)
                 task_result_status = task_result[0]
                 task_result_msg = task_result[1]
                 task_result_replan_flag = task_result[2]
-
+                
                 if task_result_status == True:
                     message = f"""Succeeded task!
                             Task Given by Planner: '{actual_task_description}'
@@ -151,7 +153,8 @@ class Locobot(RobotServerBase):
                         message=message,
                         replan=task_result_replan_flag
                     )
-            
+
+            # after some number of attempts at the task, if it still fails, then the task fails and doesn't call replan
             return TaskResult(
                 success=False,
                 message=f"""Failed task: 
