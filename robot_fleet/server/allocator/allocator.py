@@ -146,16 +146,16 @@ class LPAllocator(AllocatorBase):
                 caps = set()
                 desc = t.description.lower()
                 # Only add navigate if it's explicitly about navigation
-                if 'navigate to' in desc or 'move to' in desc or 'go to' in desc:
+                if 'navigate ' in desc or 'move ' in desc or 'go to' in desc:
                     caps.add('navigate')
                 # Only add pick if it's explicitly about picking up
-                if 'pick up' in desc or 'pick the' in desc:
+                if 'pick ' in desc:
                     caps.add('pick')
                 # Only add place if it's explicitly about placing
-                if 'place in' in desc or 'place the' in desc:
+                if 'place ' in desc:
                     caps.add('place')
                 # Only add explore if it's explicitly about exploration
-                if 'explore' in desc and 'area' in desc:
+                if 'explore' in desc:
                     caps.add('explore_known_locations')
                 # Only add capture_image if it's explicitly about capturing images
                 if 'capture image' in desc or 'take picture' in desc:
