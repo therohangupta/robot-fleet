@@ -1,4 +1,4 @@
-"""Pick and place robot implementation"""
+"""HSR MoMa robot implementation"""
 import asyncio
 import json
 import sys
@@ -20,7 +20,7 @@ import ast
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
-
+# hardcoded for our .env file — change this path to match your .env file
 load_dotenv()  # This will look for a .env file in the current directory
 
 
@@ -36,6 +36,7 @@ class HSR(RobotServerBase):
     async def _execute_task(self, task_description: str) -> TaskResult:
         actual_task_description = task_description.split("DO THE FOLLOWING TASK:")[1].strip()
         try:
+            # currently tries to complete the task 3 times            
             for i in range(3):
                 print(f"Executing task: {task_description}")
 
@@ -124,6 +125,7 @@ class HSR(RobotServerBase):
                 print("Execution stdout:\n", result.stdout)
                 print("Execution stderr:\n", result.stderr)
 
+                # Extract the result information and capture (status, msg, replan) tuple
                 task_result_string = result.stdout.split("__DONE WITH TASK__")[1]
                 task_result_string = task_result_string.strip()
                 task_result = ast.literal_eval(task_result_string)
@@ -141,7 +143,7 @@ class HSR(RobotServerBase):
                             message=message,
                             replan=task_result_replan_flag
                         )
-
+            # after some number of attempts at the task, if it still fails, then the task fails and doesn't call replan
             return TaskResult(
                 success=False,
                 message=f"""Failed task!    
@@ -165,4 +167,4 @@ async def do_task(request: TaskRequest):
     return result
 
 # pip install openai fastapi dotenv uvicorn ultralytics
-# To run: uvicorn hsr_server:app --host 0.0.0.0 --port 5001
+# To start server: cd to current directory and run `uvicorn hsr_server:app --host 0.0.0.0 --port 5001`
