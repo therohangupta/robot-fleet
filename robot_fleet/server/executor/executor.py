@@ -54,7 +54,7 @@ class Executor:
         
         return robot_task_map
 
-    # tries to do the task 3 times and if its not successful on the third try, raises an exception
+    # sends the task to the robot
     async def _start_task(self, robot_id: int, task_id: int, task_description: str):
         try:
             print(f"Starting task {task_description} for robot {robot_id}")
@@ -115,7 +115,7 @@ class Executor:
             except Exception as update_error:
                 print(f"Failed to update task status on exception: {update_error}")
 
-
+    # main function that starts the full execution from DAG generation to sending tasks in a queue
     async def execute(self):
         # Mark plan as executing
         await self.registry.update_plan(self.plan_id, execution_status=1)  # 1 = executing
@@ -161,7 +161,7 @@ class Executor:
                     logger.error(f"Task {t.task_id} for robot {t.robot_id} failed with exception: {t.exception()}")
             await asyncio.sleep(1)
 
-            # TODO: if replan is true, generate a new plan and update global variables to execute from where the replanner left off
+            # if replan is true, generate a new plan and update global variables to execute from where the replanner left off
             async with self.mutex:
                 if self.replan:
                     dag = await self._generate_dag()
