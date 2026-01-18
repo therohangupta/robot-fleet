@@ -1,0 +1,15 @@
+Given the following list of available tasks (all have no unmet dependencies, each with an optional suggested 'robot_type') and robots (each with a 'robot_type', 'capabilities', and previous task), assign each robot at most one available task to work on next.
+
+If a task specifies a 'robot_type', prioritize assigning it to a robot of that type, provided its capabilities and current state (previous task) are also suitable. If no 'robot_type' is specified for a task, or if no robot of the specified type is suitable/available, assign based on capabilities and other factors.
+
+Consider robot capabilities, robot types, the world statements, and the previous task each robot was working on. If the previous task is None, you are assigning the first task for the robot.
+
+Minimize switching cost (prefer to continue similar or related tasks based on world state and robot state if possible). Every robot is available in each round. Assign each robot a task if there is an available task within its capabilities and matching its type (if specified by the task).
+
+If there are more robots than available tasks, or no suitable tasks for a robot, do not assign a task to that robot in this round.
+
+World Statements: {world_statements}
+Available Tasks: {available_tasks}
+Robots: {robot_descriptions}
+
+Respond ONLY with a JSON object mapping robot IDs to assigned integer task IDs, e.g. {{"robot_id": 5, ...}}. Do not use null, string names, or non-integer task IDs.

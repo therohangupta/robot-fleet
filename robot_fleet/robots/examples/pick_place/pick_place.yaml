@@ -12,7 +12,7 @@ taskServer:
   port: 8003        # TODO: This should point to the actual Task Server port
 
 container:
-  image: robotfleet/pick-place:1.0
+  image: robotfleet/pick_place_robot:1.0
   environment:
     ROBOT_ID: ""  # Will be set when instantiating
     LOG_LEVEL: info
@@ -23,6 +23,5 @@ container:
     - /dev/ttyUSB*  # For arm and gripper
 
 capabilities:
-  - pick  # Pick up objects
-  - place  # Place objects
+  - has a single two-finger claw-like gripper that can pick up and place objects
   - manipulation

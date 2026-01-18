@@ -1,0 +1,27 @@
+# LLM-Based Allocator Configuration
+# ================================
+
+name: LLM-Based Allocator
+
+description: >
+  Uses OpenAI's GPT-4 to intelligently allocate tasks to robots based on
+  their capabilities, task requirements, and current state. Considers robot
+  types, world statements, and optimal goal completion.
+
+method_type: foundation model
+
+output_format: >
+  JSON with 'allocations' array. Each allocation has: task_id, robot_id.
+
+prompts:
+  - type: system
+    description: System prompt defining the allocation role
+  - type: user
+    description: Template with robot/task context and allocation instructions
+
+example_behavior: |
+  - Gathers robot capabilities and current states
+  - Analyzes task requirements and dependencies
+  - Includes world statements for context
+  - Uses GPT-4 to find optimal assignments
+  - Returns task-to-robot allocation mapping

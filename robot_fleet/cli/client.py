@@ -222,6 +222,32 @@ class FleetManagerClient:
         except grpc.RpcError as e:
             return {"error": f"RPC failed: {e.details()} ({e.code()})"}
 
+    def allocate_plan(self, plan_id: int, allocation_strategy: str):
+        """Allocate robots to tasks in an existing plan.
+        
+        Args:
+            plan_id: ID of the plan to allocate
+            allocation_strategy: Allocation strategy to use ('lp', 'llm', 'cost_based')
+            
+        Returns:
+            AllocatePlanResponse with plan object and error message
+        """
+        allocation_strategy_enum = ALLOCATION_STRATEGY_ENUMS.get(
+            allocation_strategy.lower(),
+            ALLOCATION_STRATEGY_ENUMS["lp"]
+        )
+        request = fleet_manager_pb2.AllocatePlanRequest(
+            plan_id=plan_id,
+            allocation_strategy=allocation_strategy_enum
+        )
+        try:
+            response = self.stub.AllocatePlan(request)
+            return response
+        except grpc.RpcError as e:
+            return fleet_manager_pb2.AllocatePlanResponse(
+                error=f"RPC failed: {e.details()} ({e.code()})"
+            )
+
     # Task management methods
     def create_task(self, description: str, robot_id: str, robot_type: str,
                    goal_id: Optional[int] = None, 

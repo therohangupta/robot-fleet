@@ -27,7 +27,7 @@ class FakeRobotServer(RobotServerBase):
     async def _execute_task(self, task_request: TaskRequest) -> TaskResult:
         logger.info(f"Received task: {task_request.task_description}")
         actual_task_description = task_request.task_description.split("DO THE FOLLOWING TASK:")[1].strip()
-        await asyncio.sleep(2)
+        await asyncio.sleep(5)
         return TaskResult(
             success=True,
             message=f"""Succeeded task!

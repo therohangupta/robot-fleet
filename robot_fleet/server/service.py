@@ -677,7 +677,11 @@ class FleetManagerService(fleet_manager_pb2_grpc.FleetManagerServicer):
             )
             
     async def CreatePlan(self, request, context):
-        """Create a new plan"""
+        """Create a new plan.
+        
+        If planning_strategy is MANUAL, creates an empty plan shell (no auto-planning).
+        If allocation_strategy is NONE, skips robot allocation.
+        """
         logger.info(f"Creating new plan with strategy: {request.planning_strategy} and allocation: {request.allocation_strategy}")
         try:
             # Get the requested planning strategy and allocation strategy
@@ -685,11 +689,23 @@ class FleetManagerService(fleet_manager_pb2_grpc.FleetManagerServicer):
             allocation_strategy = request.allocation_strategy
             goal_ids = list(request.goal_ids) if request.goal_ids else []
             
+            # MANUAL strategy: create empty plan shell for user-defined tasks
+            if planning_strategy == fleet_manager_pb2.PlanningStrategy.MANUAL:
+                logger.info("Creating manual plan shell (no auto-planning)")
+                plan = await self.registry.create_plan(
+                    planning_strategy=planning_strategy,
+                    allocation_strategy=allocation_strategy,
+                    goal_ids=goal_ids,
+                    task_ids=[]
+                )
+                return fleet_manager_pb2.CreatePlanResponse(plan=plan)
+            
+            # Auto-planning requires goals
             if not goal_ids:
                 context.set_code(grpc.StatusCode.INVALID_ARGUMENT)
-                context.set_details("At least one goal ID must be provided")
+                context.set_details("At least one goal ID must be provided for auto-planning")
                 return fleet_manager_pb2.CreatePlanResponse(
-                    error="At least one goal ID must be provided"
+                    error="At least one goal ID must be provided for auto-planning"
                 )
             
             # For testing environments, create a plan directly without using the planner
@@ -705,17 +721,26 @@ class FleetManagerService(fleet_manager_pb2_grpc.FleetManagerServicer):
                 return fleet_manager_pb2.CreatePlanResponse(plan=plan)
             
             # Normal flow using the planner
-            from robot_fleet.server.planner.planner import get_planner
-            from robot_fleet.server.allocator.allocator import get_allocator
+            from robot_fleet.server.planners.base import get_planner
+            from robot_fleet.server.allocators.base import get_allocator
             planner = get_planner(planning_strategy)
             print(f"Using planner: {planner}")
-            allocator = get_allocator(allocation_strategy)
-            print(f"Using allocator: {allocator}")
             
             # Generate plan using the planner
             try:
                 logger.info(f"Generating plan for goals {goal_ids} using {planning_strategy} planner")
                 plan_json = await planner.plan(goal_ids)
+
+                # Debug: Check what the planner has stored
+                print(f"🔍 PLANNER DEBUG: planning_prompts = {getattr(planner, 'planning_prompts', 'NOT SET')}")
+                print(f"🔍 PLANNER DEBUG: planning_artifacts = {getattr(planner, 'planning_artifacts', 'NOT SET')}")
+                print(f"🔍 PLANNER DEBUG: server_logs = {getattr(planner, 'server_logs', 'NOT SET')}")
+
+                # Collect server logs from planner
+                server_logs = getattr(planner, 'server_logs', [])
+                if not server_logs:
+                    server_logs = [f"Planning completed successfully for goals {goal_ids} using {planning_strategy} strategy"]
+
                 plan_id = await planner.save_plan_to_db(plan_json, planning_strategy, allocation_strategy, goal_ids)
                 logger.info(f"Successfully created and saved plan {plan_id}")
             except Exception as e:
@@ -726,14 +751,26 @@ class FleetManagerService(fleet_manager_pb2_grpc.FleetManagerServicer):
                     error=f"Planning failed: {str(e)}"
                 )
 
-            # Allocate tasks using the allocator
-            allocation = await allocator.allocate(plan_id)
+            # Allocate tasks if allocation strategy is not NONE
+            if allocation_strategy != fleet_manager_pb2.AllocationStrategy.NONE:
+                allocator = get_allocator(allocation_strategy)
+                print(f"Using allocator: {allocator}")
+                allocation = await allocator.allocate(plan_id)
+                print(f"Task allocation complete: {allocation}")
 
-            print(f"Task allocation complete: {allocation}")
+                # Store allocation artifacts in the plan
+                await self.registry.update_plan(
+                    plan_id,
+                    allocation_prompts=getattr(allocator, 'allocation_prompts', {}),
+                    allocation_artifacts=getattr(allocator, 'allocation_artifacts', {}),
+                    server_logs=getattr(allocator, 'server_logs', [])
+                )
+            else:
+                logger.info("Skipping allocation (strategy=NONE)")
             
             # Get the plan with all tasks
             plan = await self.registry.get_plan(plan_id)
-            
+
             logger.info(f"Successfully created plan: {plan_id}")
             return fleet_manager_pb2.CreatePlanResponse(
                 plan=plan
@@ -744,6 +781,57 @@ class FleetManagerService(fleet_manager_pb2_grpc.FleetManagerServicer):
             context.set_code(grpc.StatusCode.INTERNAL)
             context.set_details(f"Failed to create plan: {str(e)}")
             return fleet_manager_pb2.CreatePlanResponse(
+                error=f"Error: {str(e)}"
+            )
+    
+    async def AllocatePlan(self, request, context):
+        """Allocate robots to tasks in an existing plan."""
+        logger.info(f"Allocating plan {request.plan_id} with strategy: {request.allocation_strategy}")
+        try:
+            plan_id = request.plan_id
+            allocation_strategy = request.allocation_strategy
+            
+            # Check plan exists
+            plan = await self.registry.get_plan(plan_id)
+            if not plan:
+                context.set_code(grpc.StatusCode.NOT_FOUND)
+                context.set_details(f"Plan {plan_id} not found")
+                return fleet_manager_pb2.AllocatePlanResponse(
+                    error=f"Plan {plan_id} not found"
+                )
+            
+            # Check there are tasks to allocate
+            if not plan.task_ids:
+                context.set_code(grpc.StatusCode.FAILED_PRECONDITION)
+                context.set_details(f"Plan {plan_id} has no tasks to allocate")
+                return fleet_manager_pb2.AllocatePlanResponse(
+                    error=f"Plan {plan_id} has no tasks to allocate"
+                )
+            
+            # Run allocation
+            from robot_fleet.server.allocators.base import get_allocator
+            allocator = get_allocator(allocation_strategy)
+            allocation = await allocator.allocate(plan_id)
+            logger.info(f"Allocation complete for plan {plan_id}: {allocation}")
+
+            # Update plan's allocation strategy and allocation data in DB
+            await self.registry.update_plan(
+                plan_id=plan_id,
+                allocation_strategy=allocation_strategy,
+                allocation_prompts=getattr(allocator, 'allocation_prompts', None),
+                allocation_artifacts=getattr(allocator, 'allocation_artifacts', None)
+            )
+            
+            # Get updated plan
+            updated_plan = await self.registry.get_plan(plan_id)
+            
+            return fleet_manager_pb2.AllocatePlanResponse(plan=updated_plan)
+            
+        except Exception as e:
+            logger.error(f"Error allocating plan: {str(e)}")
+            context.set_code(grpc.StatusCode.INTERNAL)
+            context.set_details(f"Failed to allocate plan: {str(e)}")
+            return fleet_manager_pb2.AllocatePlanResponse(
                 error=f"Error: {str(e)}"
             )
 
@@ -883,15 +971,74 @@ class FleetManagerService(fleet_manager_pb2_grpc.FleetManagerServicer):
     async def StartPlan(
         self, request: fleet_manager_pb2.StartPlanRequest, context
     ) -> fleet_manager_pb2.StartPlanResponse:
+        """Start executing a plan.
+        
+        IMPORTANT: Only fully allocated plans can be executed. A plan is executable
+        if and only if ALL tasks have a robot_id assigned. This is the invariant
+        that distinguishes an ExecutablePlan from an UnallocatedPlan.
+        """
         from robot_fleet.server.executor.executor import Executor
-        print(f"Received StartPlan request for plan_id: {request.plan_id}")
+        plan_id = request.plan_id
+        logger.info(f"Received StartPlan request for plan_id: {plan_id}")
+        
         try:
-            executor = Executor(plan_id=request.plan_id)
-            await executor.execute()
+            # Step 1: Verify plan exists
+            plan = await self.registry.get_plan(plan_id)
+            if not plan:
+                error_msg = f"Plan {plan_id} not found"
+                logger.error(error_msg)
+                context.set_code(grpc.StatusCode.NOT_FOUND)
+                context.set_details(error_msg)
+                return fleet_manager_pb2.StartPlanResponse(error=error_msg)
+            
+            # Step 2: Check allocation status - CRITICAL VALIDATION
+            allocation_status = await self.registry.get_plan_allocation_status(plan_id)
+            
+            if not allocation_status['is_executable']:
+                status = allocation_status['status']
+                total = allocation_status['total_tasks']
+                allocated = allocation_status['allocated_tasks']
+                unallocated_ids = allocation_status['unallocated_task_ids']
+                
+                if status == 'empty':
+                    error_msg = f"Plan {plan_id} has no tasks. Cannot execute an empty plan."
+                elif status == 'unallocated':
+                    error_msg = (
+                        f"Plan {plan_id} is UNALLOCATED. "
+                        f"All {total} tasks need robot assignments before execution. "
+                        f"Run allocation first using the 'allocate' command or API."
+                    )
+                elif status == 'partially_allocated':
+                    error_msg = (
+                        f"Plan {plan_id} is PARTIALLY ALLOCATED ({allocated}/{total} tasks assigned). "
+                        f"Tasks without robots: {unallocated_ids}. "
+                        f"All tasks must have robot assignments before execution."
+                    )
+                else:
+                    error_msg = f"Plan {plan_id} is not executable (status: {status})"
+                
+                logger.error(error_msg)
+                context.set_code(grpc.StatusCode.FAILED_PRECONDITION)
+                context.set_details(error_msg)
+                return fleet_manager_pb2.StartPlanResponse(error=error_msg)
+            
+            # Step 3: Plan is executable - proceed with execution
+            logger.info(f"Plan {plan_id} is fully allocated ({allocation_status['total_tasks']} tasks). Starting execution...")
+
+            # Start execution asynchronously in the background
+            # The executor will handle updating plan status to executing and completed
+            executor = Executor(plan_id=plan_id)
+            asyncio.create_task(executor.execute())
+
+            # Return immediately - execution will continue in background
             return fleet_manager_pb2.StartPlanResponse(error="")
+            
         except Exception as e:
-            print(f"Error in StartPlan: {e}")
-            return fleet_manager_pb2.StartPlanResponse(error=f"Failed to start plan: {e}")
+            error_msg = f"Failed to start plan {plan_id}: {e}"
+            logger.error(error_msg, exc_info=True)
+            context.set_code(grpc.StatusCode.INTERNAL)
+            context.set_details(error_msg)
+            return fleet_manager_pb2.StartPlanResponse(error=error_msg)
 
 
 async def serve(port: int = 50051, db_url: str = None, reset_db: bool = False, verbose: bool = False, sql_debug: bool = False):

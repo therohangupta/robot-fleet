@@ -4,7 +4,7 @@ from robot_fleet.robots.registry.instance_registry import RobotInstanceRegistry
 import asyncio
 from typing import Optional
 from argparse import ArgumentParser
-from robot_fleet.server.planner.types.replanner import Replanner
+from robot_fleet.server.planners.types.replanner import Replanner
 
 class Executor:
     def __init__(self, plan_id: int, db_url: Optional[str] = None):
@@ -58,6 +58,10 @@ class Executor:
     async def _start_task(self, robot_id: int, task_id: int, task_description: str):
         try:
             print(f"Starting task {task_description} for robot {robot_id}")
+
+            # Update task status to IN_PROGRESS
+            await self.registry.update_task_status(task_id, 2)  # TASK_IN_PROGRESS = 2
+
             robot = await self.registry.get_robot(robot_id)
             robot_client = RobotClient(robot.task_server_info.host, robot.task_server_info.port)
 
@@ -69,8 +73,16 @@ class Executor:
 
             result = await robot_client.do_task(task_description)
             print(f"Task {task_description} for robot {robot_id} completed with result: {result}")
+
+            # Store execution result in database
+            result_message = f"Success: {result.message}" if result.success else f"Failed: {result.message}"
+            await self.registry.update_task(task_id, result=result_message)
+
             async with self.mutex:
                 if result.success and not result.replan:
+                    # Update task status to COMPLETED
+                    await self.registry.update_task_status(task_id, 3)  # TASK_COMPLETED = 3
+
                     # complete the task, discard curr task, and set robot to idle
                     self.complete_task_ids.add(task_id)
                     self.robot_to_idle_bool[robot_id] = True
@@ -78,7 +90,9 @@ class Executor:
                     self.previous_task_status_messages.append(result.message.replace("Succeeded task!", ""))
                     return
                 elif result.replan:
-                    breakpoint()
+                    # Update task status to FAILED (for replanning)
+                    await self.registry.update_task_status(task_id, 5)  # TASK_FAILED = 5
+
                     replanner = Replanner(db_url="postgresql+asyncpg://robot_user:secret@localhost:5432/robot_fleet")
                     self.plan_id = await replanner.replan(
                         plan_id=self.plan_id,
@@ -89,11 +103,23 @@ class Executor:
                     print(f"Replan generated new plan with ID: {self.plan_id}")
                     self.replan = True
                     return
+                else:
+                    # Task failed without replanning
+                    await self.registry.update_task_status(task_id, 5)  # TASK_FAILED = 5
         except Exception as e:
             print(f"Exception in _start_task for robot {robot_id}, task {task_id}: {e}")
+            # Update task status to FAILED on exception
+            try:
+                await self.registry.update_task_status(task_id, 5)  # TASK_FAILED = 5
+                await self.registry.update_task(task_id, result=f"Exception: {str(e)}")
+            except Exception as update_error:
+                print(f"Failed to update task status on exception: {update_error}")
 
 
     async def execute(self):
+        # Mark plan as executing
+        await self.registry.update_plan(self.plan_id, execution_status=1)  # 1 = executing
+
         dag = await self._generate_dag()
         task_to_dependency_map = {node.task_id: node.depends_on for node in dag.nodes}
         self.robot_task_map = await self._get_robot_task_map(dag)
@@ -146,6 +172,8 @@ class Executor:
                     total_tasks = sum(len(tasks) for tasks in self.robot_task_map.values())
                     # self.previous_task_status_messages = []
                     self.replan = False
+        # Mark plan as completed in database
+        await self.registry.update_plan(self.plan_id, execution_status=2)  # 2 = completed
         print("Plan Completed")
 
         

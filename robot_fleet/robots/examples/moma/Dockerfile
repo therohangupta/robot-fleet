@@ -23,14 +23,14 @@ RUN pip install --upgrade pip \
 
 ENV PYTHONPATH=/app
 
-# Default environment variables from pick_place.yaml
-ENV PORT=8002
+# Default environment variables from moma.yaml
+ENV PORT=8001
 ENV LOG_LEVEL=info
 ENV ARM_CONFIG=""
 ENV GRIPPER_CONFIG=""
 
 # Expose the robot server port
-EXPOSE 8002
+EXPOSE 8001
 
 # Run the robot server
 CMD python robot_fleet/robots/examples/fake_robot_server.py --robot_id $ROBOT_ID --config $CONFIG_FILE 

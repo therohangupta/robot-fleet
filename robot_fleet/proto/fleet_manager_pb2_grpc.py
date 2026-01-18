@@ -150,6 +150,11 @@ class FleetManagerStub(object):
                 request_serializer=fleet__manager__pb2.StartPlanRequest.SerializeToString,
                 response_deserializer=fleet__manager__pb2.StartPlanResponse.FromString,
                 _registered_method=True)
+        self.AllocatePlan = channel.unary_unary(
+                '/robot_fleet.FleetManager/AllocatePlan',
+                request_serializer=fleet__manager__pb2.AllocatePlanRequest.SerializeToString,
+                response_deserializer=fleet__manager__pb2.AllocatePlanResponse.FromString,
+                _registered_method=True)
 
 
 class FleetManagerServicer(object):
@@ -304,6 +309,13 @@ class FleetManagerServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def AllocatePlan(self, request, context):
+        """Allocate robots to an existing (unallocated) plan
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
 
 def add_FleetManagerServicer_to_server(servicer, server):
     rpc_method_handlers = {
@@ -421,6 +433,11 @@ def add_FleetManagerServicer_to_server(servicer, server):
                     servicer.StartPlan,
                     request_deserializer=fleet__manager__pb2.StartPlanRequest.FromString,
                     response_serializer=fleet__manager__pb2.StartPlanResponse.SerializeToString,
+            ),
+            'AllocatePlan': grpc.unary_unary_rpc_method_handler(
+                    servicer.AllocatePlan,
+                    request_deserializer=fleet__manager__pb2.AllocatePlanRequest.FromString,
+                    response_serializer=fleet__manager__pb2.AllocatePlanResponse.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -1045,6 +1062,33 @@ class FleetManager(object):
             '/robot_fleet.FleetManager/StartPlan',
             fleet__manager__pb2.StartPlanRequest.SerializeToString,
             fleet__manager__pb2.StartPlanResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def AllocatePlan(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/robot_fleet.FleetManager/AllocatePlan',
+            fleet__manager__pb2.AllocatePlanRequest.SerializeToString,
+            fleet__manager__pb2.AllocatePlanResponse.FromString,
             options,
             channel_credentials,
             insecure,

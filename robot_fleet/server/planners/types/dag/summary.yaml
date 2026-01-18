@@ -1,0 +1,31 @@
+# DAG Planner Configuration
+# ==========================
+
+name: DAG Planner
+
+description: >
+  Generates a separate DAG (Directed Acyclic Graph) for each goal, then
+  combines them. Tasks within a goal can run in parallel if they don't
+  depend on each other. No cross-goal dependencies - goals are isolated.
+
+method_type: foundation model
+
+output_format: >
+  JSON with 'nodes' array. Each node has: id (string like "goal1_node0"),
+  description, goal_id, depends_on (list of node IDs). The goal prefix
+  ensures unique IDs when DAGs are combined.
+
+prompts:
+  - type: system
+    description: System prompt defining DAG planning principles
+  - type: user
+    description: Template with goal, robot context, and world statements
+
+example_output: |
+  {
+    "nodes": [
+      {"id": "goal1_node0", "description": "Fetch item A", "goal_id": 1, "depends_on": []},
+      {"id": "goal1_node1", "description": "Fetch item B", "goal_id": 1, "depends_on": []},
+      {"id": "goal1_node2", "description": "Combine items", "goal_id": 1, "depends_on": ["goal1_node0", "goal1_node1"]}
+    ]
+  }

@@ -1,0 +1,27 @@
+# Cost-Based Iterative Allocator Configuration
+# =============================================
+
+name: Cost-Based Iterative Allocator
+
+description: >
+  Uses iterative assignment with LLM reasoning to minimize task switching
+  costs while respecting dependencies. Considers robot state history and
+  optimizes for reduced context switching between tasks.
+
+method_type: hybrid
+
+output_format: >
+  JSON mapping robot IDs to task IDs, processed iteratively round by round.
+
+prompts:
+  - type: system
+    description: System prompt for iterative allocation reasoning
+  - type: user
+    description: Template for robot state, available tasks, and cost optimization
+
+example_behavior: |
+  - Builds task dependency graph
+  - Iteratively assigns tasks to robots in dependency order
+  - Uses LLM to minimize switching costs between tasks
+  - Considers robot previous assignments and capabilities
+  - Continues until all tasks are assigned

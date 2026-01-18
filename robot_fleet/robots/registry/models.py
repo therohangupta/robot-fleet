@@ -39,6 +39,13 @@ class PlanModel(Base):
     planning_strategy = Column(Integer, nullable=False) # Store as integer
     allocation_strategy = Column(Integer, nullable=False, default=0) # Store as integer
     goal_ids = Column(JSON, nullable=True)  # List of int64 (authoritative, can be empty)
+    planning_prompts = Column(JSON, nullable=True)  # Store prompts used for planning
+    allocation_prompts = Column(JSON, nullable=True)  # Store prompts used for allocation
+    planning_artifacts = Column(JSON, nullable=True)  # Store artifacts from planning (DAG structure, etc.)
+    allocation_artifacts = Column(JSON, nullable=True)  # Store artifacts from allocation
+    server_logs = Column(Text, nullable=True)  # Store server-side logs
+    execution_status = Column(Integer, default=0)  # 0=not_executed, 1=executing, 2=completed, 3=failed
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
     tasks = relationship("TaskModel", back_populates="plan", cascade="all, delete-orphan")
 
 class TaskModel(Base):
@@ -51,6 +58,7 @@ class TaskModel(Base):
     status = Column(Integer, default=fleet_manager_pb2.TaskStatus.TASK_PENDING)
     dependency_task_ids = Column(JSON, nullable=True, default=[])
     robot_type = Column(String, nullable=True)
+    result = Column(Text, nullable=True)  # Execution result/output
     goal = relationship("GoalModel", back_populates="tasks")
     robot = relationship("RobotModel", back_populates="tasks")
     plan = relationship("PlanModel", back_populates="tasks")
@@ -103,7 +111,8 @@ def task_model_to_proto(task_model: TaskModel) -> fleet_manager_pb2.Task:
         status=task_model.status,
         # Ensure dependency_task_ids is a list of integers, handle None or empty string
         dependency_task_ids=task_model.dependency_task_ids if isinstance(task_model.dependency_task_ids, list) else [],
-        robot_type=task_model.robot_type if task_model.robot_type is not None else "" # Add robot_type to proto
+        robot_type=task_model.robot_type if task_model.robot_type is not None else "", # Add robot_type to proto
+        result=task_model.result if task_model.result is not None else "" # Add result to proto
     )
     # Conditionally set optional fields if they have values
     if task_model.robot_id is not None:
@@ -112,6 +121,8 @@ def task_model_to_proto(task_model: TaskModel) -> fleet_manager_pb2.Task:
         task_proto.goal_id = task_model.goal_id
     if task_model.plan_id is not None:
         task_proto.plan_id = task_model.plan_id
+    if task_model.result is not None:
+        task_proto.result = task_model.result
         
     return task_proto
 
@@ -147,7 +158,8 @@ def task_proto_to_model(proto: fleet_manager_pb2.Task) -> TaskModel:
         dependency_task_ids=list(proto.dependency_task_ids),
         robot_id=proto.robot_id if proto.robot_id else None,
         status=fleet_manager_pb2.TaskStatus.Name(proto.status),
-        robot_type=proto.robot_type if proto.HasField('robot_type') else None
+        robot_type=proto.robot_type if proto.HasField('robot_type') else None,
+        result=proto.result if proto.HasField('result') else None
     )
 
 def goal_proto_to_model(proto: fleet_manager_pb2.Goal) -> GoalModel:
@@ -163,10 +175,16 @@ def plan_model_to_proto(plan_model: 'PlanModel', tasks: Optional[List['TaskModel
     plan_proto.plan_id = plan_model.plan_id
     plan_proto.planning_strategy = plan_model.planning_strategy
     plan_proto.allocation_strategy = getattr(plan_model, 'allocation_strategy', 0)
+    plan_proto.execution_status = getattr(plan_model, 'execution_status', 0)
     if plan_model.goal_ids:
         plan_proto.goal_ids.extend(plan_model.goal_ids)
     if tasks:
         plan_proto.task_ids.extend([task.task_id for task in tasks])
+
+    # Note: Additional plan data (prompts, artifacts, logs) is stored in database
+    # but not included in protobuf since the protobuf files weren't regenerated.
+    # This data is fetched separately by the grpc_bridge when needed.
+
     return plan_proto
 
 def plan_proto_to_model(proto: fleet_manager_pb2.Plan) -> PlanModel:
@@ -175,7 +193,8 @@ def plan_proto_to_model(proto: fleet_manager_pb2.Plan) -> PlanModel:
         plan_id=proto.plan_id,
         # Store the integer value of the enum
         planning_strategy=proto.planning_strategy,
-        allocation_strategy=proto.allocation_strategy
+        allocation_strategy=proto.allocation_strategy,
+        execution_status=proto.execution_status if proto.HasField('execution_status') else 0
     )
 
 # --- World Statement Conversion ---

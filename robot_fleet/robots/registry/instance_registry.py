@@ -679,11 +679,16 @@ class RobotInstanceRegistry:
     # --- Plan Management ---
     @db_retry()
     async def create_plan(
-        self, 
-        planning_strategy: fleet_manager_pb2.PlanningStrategy, 
-        allocation_strategy: fleet_manager_pb2.AllocationStrategy, 
+        self,
+        planning_strategy: fleet_manager_pb2.PlanningStrategy,
+        allocation_strategy: fleet_manager_pb2.AllocationStrategy,
         task_ids: Optional[List[int]] = None,
-        goal_ids: Optional[List[int]] = None
+        goal_ids: Optional[List[int]] = None,
+        planning_prompts: Optional[Dict[str, str]] = None,
+        allocation_prompts: Optional[Dict[str, str]] = None,
+        planning_artifacts: Optional[Dict] = None,
+        allocation_artifacts: Optional[Dict] = None,
+        server_logs: Optional[str] = None
     ) -> Optional[fleet_manager_pb2.Plan]:
         """Create a new plan and link it to tasks and optionally goals."""
         logger.info(f"Attempting to create plan with strategy {planning_strategy} and allocation {allocation_strategy} for tasks {task_ids} and goals {goal_ids}")
@@ -692,10 +697,18 @@ class RobotInstanceRegistry:
                 # Convert strategy enum value to its integer representation for storage
                 strategy_int = planning_strategy
                 allocation_int = allocation_strategy
+                print(f"💾 DB CREATE: Storing planning_prompts: {planning_prompts is not None}")
+                print(f"💾 DB CREATE: Storing planning_artifacts: {planning_artifacts is not None}")
+                print(f"💾 DB CREATE: Storing server_logs: {server_logs is not None}")
                 new_plan = PlanModel(
                     planning_strategy=strategy_int,
                     allocation_strategy=allocation_int,
-                    goal_ids=goal_ids or []
+                    goal_ids=goal_ids or [],
+                    planning_prompts=planning_prompts,
+                    allocation_prompts=allocation_prompts,
+                    planning_artifacts=planning_artifacts,
+                    allocation_artifacts=allocation_artifacts,
+                    server_logs=server_logs
                 )
                 session.add(new_plan)
                 await session.flush() # Persist to get plan_id
@@ -731,6 +744,46 @@ class RobotInstanceRegistry:
             return plan_model_to_proto(plan_model, plan_tasks)
 
     @db_retry()
+    async def get_plan_allocation_status(self, plan_id: int) -> dict:
+        """Get the allocation status of a plan.
+        
+        Returns:
+            dict with:
+                - status: 'unallocated' | 'partially_allocated' | 'fully_allocated'
+                - total_tasks: int
+                - allocated_tasks: int
+                - unallocated_task_ids: List[int] - task IDs without robot assignment
+                - is_executable: bool - True only if fully_allocated
+        """
+        async with self.async_session_factory() as session:
+            # Get all tasks for this plan
+            tasks_result = await session.execute(
+                select(TaskModel).where(TaskModel.plan_id == plan_id)
+            )
+            tasks = tasks_result.scalars().all()
+            
+            total = len(tasks)
+            allocated = sum(1 for t in tasks if t.robot_id is not None and t.robot_id != '')
+            unallocated_ids = [t.task_id for t in tasks if t.robot_id is None or t.robot_id == '']
+            
+            if total == 0:
+                status = 'empty'
+            elif allocated == 0:
+                status = 'unallocated'
+            elif allocated < total:
+                status = 'partially_allocated'
+            else:
+                status = 'fully_allocated'
+            
+            return {
+                'status': status,
+                'total_tasks': total,
+                'allocated_tasks': allocated,
+                'unallocated_task_ids': unallocated_ids,
+                'is_executable': status == 'fully_allocated' and total > 0
+            }
+
+    @db_retry()
     async def list_plans(self) -> List[fleet_manager_pb2.Plan]:
         """List all plans in the system"""
         async with self.async_session_factory() as session:
@@ -755,12 +808,18 @@ class RobotInstanceRegistry:
 
     @db_retry()
     async def update_plan(
-        self, 
-        plan_id: int, 
+        self,
+        plan_id: int,
         goal_ids: Optional[List[int]] = None,
         task_ids: Optional[List[int]] = None,
         planning_strategy: Optional[fleet_manager_pb2.PlanningStrategy] = None,
-        allocation_strategy: Optional[fleet_manager_pb2.AllocationStrategy] = None
+        allocation_strategy: Optional[fleet_manager_pb2.AllocationStrategy] = None,
+        execution_status: Optional[int] = None,
+        planning_prompts: Optional[Dict[str, str]] = None,
+        allocation_prompts: Optional[Dict[str, str]] = None,
+        planning_artifacts: Optional[Dict] = None,
+        allocation_artifacts: Optional[Dict] = None,
+        server_logs: Optional[List[str]] = None
     ) -> Optional[fleet_manager_pb2.Plan]:
         """Update a plan's information."""
         async with self.async_session_factory() as session:
@@ -781,6 +840,18 @@ class RobotInstanceRegistry:
                     plan_model.allocation_strategy = allocation_strategy
                 if goal_ids is not None:
                     plan_model.goal_ids = goal_ids
+                if planning_prompts is not None:
+                    plan_model.planning_prompts = planning_prompts
+                if allocation_prompts is not None:
+                    plan_model.allocation_prompts = allocation_prompts
+                if execution_status is not None:
+                    plan_model.execution_status = execution_status
+                if planning_artifacts is not None:
+                    plan_model.planning_artifacts = planning_artifacts
+                if allocation_artifacts is not None:
+                    plan_model.allocation_artifacts = allocation_artifacts
+                if server_logs is not None:
+                    plan_model.server_logs = "\n".join(server_logs) if isinstance(server_logs, list) else server_logs
                 # Unlink all existing tasks if task_ids is provided
                 if task_ids is not None:
                     # Unlink all current tasks from this plan

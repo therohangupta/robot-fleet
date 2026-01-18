@@ -1,0 +1,31 @@
+# Replanner Configuration
+# =======================
+
+name: Replanner
+
+description: >
+  Generates recovery plans when a task fails or new information is discovered.
+  Takes context about completed tasks, the failure, and remaining work, then
+  produces a new task sequence to get back on track toward the original goals.
+
+method_type: foundation model
+
+output_format: >
+  JSON with 'tasks' array (same as Monolithic). Each task has: description,
+  goal_id, dependency_task_ids. The new tasks pick up from the current state
+  and aim to complete the original goals despite the failure.
+
+prompts:
+  - type: system
+    description: System prompt for recovery planning after failures
+  - type: user
+    description: Template with failure context, completed tasks, and recovery instructions
+
+example_output: |
+  {
+    "tasks": [
+      {"description": "Return to charging station", "goal_id": 1, "dependency_task_ids": []},
+      {"description": "Retry navigation with updated path", "goal_id": 1, "dependency_task_ids": [0]},
+      {"description": "Complete original delivery task", "goal_id": 1, "dependency_task_ids": [1]}
+    ]
+  }

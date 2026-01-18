@@ -7,7 +7,8 @@ from ..proto import fleet_manager_pb2
 PLANNING_STRATEGY_ENUMS = {
     "monolithic": fleet_manager_pb2.PlanningStrategy.MONOLITHIC,
     "dag": fleet_manager_pb2.PlanningStrategy.DAG,
-    "big_dag": fleet_manager_pb2.PlanningStrategy.BIG_DAG
+    "big_dag": fleet_manager_pb2.PlanningStrategy.BIG_DAG,
+    "manual": fleet_manager_pb2.PlanningStrategy.MANUAL,
 }
 PLANNING_STRATEGY_CHOICES = list(PLANNING_STRATEGY_ENUMS.keys())
 PLANNING_STRATEGY_STRINGS = {v: k for k, v in PLANNING_STRATEGY_ENUMS.items()}
@@ -15,7 +16,8 @@ PLANNING_STRATEGY_STRINGS = {v: k for k, v in PLANNING_STRATEGY_ENUMS.items()}
 ALLOCATION_STRATEGY_ENUMS = {
     "lp": fleet_manager_pb2.AllocationStrategy.LP,
     "llm": fleet_manager_pb2.AllocationStrategy.LLM,
-    "cost_based": fleet_manager_pb2.AllocationStrategy.COST_BASED
+    "cost_based": fleet_manager_pb2.AllocationStrategy.COST_BASED,
+    "none": fleet_manager_pb2.AllocationStrategy.NONE,
 }
 ALLOCATION_STRATEGY_CHOICES = list(ALLOCATION_STRATEGY_ENUMS.keys())
 ALLOCATION_STRATEGY_STRINGS = {v: k for k, v in ALLOCATION_STRATEGY_ENUMS.items()}

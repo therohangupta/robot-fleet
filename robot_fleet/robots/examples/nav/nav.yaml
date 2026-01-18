@@ -9,17 +9,17 @@ deployment:
 
 taskServer:
   host: "localhost" # TODO: This should point to the actual Task Server host
-  port: 8001 # TODO: This should point to the actual Task Server port
+  port: 8002 # TODO: This should point to the actual Task Server port
 
 container:
-  image: robotfleet/pick-place:1.0
+  image: robotfleet/nav_robot:1.0
   environment:
     ROBOT_ID: "" # Will be set when instantiating
     LOG_LEVEL: info
-    PORT: "8001" # Default port for the robot server
+    PORT: "8002" # Default port for the robot server
   required_devices:
     - /dev/ttyUSB* # For arm and gripper
 
 capabilities:
   - navigation
-  - other robots can place in basket with LARGE capacity
+  - has basket with large capacity that can carry items other robots put in it

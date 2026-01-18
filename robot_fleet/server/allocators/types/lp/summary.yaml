@@ -1,0 +1,22 @@
+# Linear Programming Allocator Configuration
+# ==========================================
+
+name: Linear Programming Allocator
+
+description: >
+  Uses mathematical optimization to solve task allocation as an integer linear
+  programming problem. Minimizes maximum robot load while respecting capability
+  constraints and robot type requirements.
+
+method_type: algorithmic
+
+prompts:
+  - type: none
+    description: This allocator uses mathematical optimization, not LLM prompts
+
+example_behavior: |
+  - Builds capability and robot type constraints
+  - Formulates as integer linear programming problem
+  - Uses PuLP solver to find optimal assignment
+  - Minimizes maximum tasks per robot (balanced workload)
+  - Returns optimal task-to-robot mapping

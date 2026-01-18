@@ -23,7 +23,7 @@ Assigns tasks from plans to specific robots.
 
 ```python
 from robot_fleet.server.planner.planner import get_planner
-from robot_fleet.server.allocator.allocator import get_allocator
+from robot_fleet.server.allocators.base import get_allocator
 from robot_fleet.proto.fleet_manager_pb2 import PlanningStrategy, AllocationStrategy
 
 # Create plan

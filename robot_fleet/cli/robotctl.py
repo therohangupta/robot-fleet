@@ -50,12 +50,15 @@ def cli():
 @click.argument('config_file')
 @click.argument('robot_id', required=False)
 @click.option('--num', '-n', default=1, show_default=True, type=int, help="Number of robots to register")
-def register(config_file, robot_id, num):
+@click.option('--host', type=str, help="Override the task server host from YAML")
+@click.option('--port', type=int, help="Override the task server port from YAML")
+def register(config_file, robot_id, num, host, port):
     """Register a new robot. Optionally register multiple robots with --num.
 
     Example:
       robotctl register my_robot.yaml my_robot_id
       robotctl register my_robot.yaml --num 3
+      robotctl register my_robot.yaml --host localhost --port 8001
     """
     if not config_file:
         raise click.UsageError("You must provide a config file. Example: robotctl register my_robot.yaml")
@@ -66,8 +69,11 @@ def register(config_file, robot_id, num):
         robot_type = config['metadata']['name']
         description = config['metadata'].get('description', '')
         capabilities = config.get('capabilities', [])
-        task_server_host = config['taskServer']['host']
-        task_server_port = config['taskServer']['port']
+
+        # Use CLI overrides if provided, otherwise use YAML values
+        task_server_host = host if host is not None else config['taskServer']['host']
+        task_server_port = port if port is not None else config['taskServer']['port']
+
         docker_host = config['deployment']['docker_host']
         docker_port = config['deployment']['docker_port']
         container_image = config['container']['image']

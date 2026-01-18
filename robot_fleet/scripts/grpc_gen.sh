@@ -13,4 +13,7 @@ python3 -m grpc_tools.protoc \
   --grpc_python_out="$OUT_DIR" \
   "$PROTO_DIR/fleet_manager.proto"
 
+# Fix the import in the generated gRPC file to use relative import
+sed -i '' 's/import fleet_manager_pb2 as fleet__manager__pb2/from . import fleet_manager_pb2 as fleet__manager__pb2/' "$OUT_DIR/fleet_manager_pb2_grpc.py"
+
 echo "gRPC Python code generated in $OUT_DIR from $PROTO_DIR/fleet_manager.proto"

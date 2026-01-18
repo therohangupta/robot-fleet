@@ -1,0 +1,31 @@
+# Monolithic Planner Configuration
+# =================================
+
+name: Monolithic Planner
+
+description: >
+  Generates a strictly sequential task list where each task depends on
+  the previous one. No parallel execution - all tasks run one after another.
+  Good for simple, linear workflows or when task ordering is critical.
+
+method_type: foundation model
+
+output_format: >
+  JSON with 'tasks' array. Each task has: description, goal_id,
+  dependency_task_ids (indices into the array, e.g., [0,1] means
+  depends on tasks at positions 0 and 1).
+
+prompts:
+  - type: system
+    description: System prompt defining the sequential planning role
+  - type: user
+    description: Template with goals, robot context, and world statements
+
+example_output: |
+  {
+    "tasks": [
+      {"description": "Pick up item A", "goal_id": 1, "dependency_task_ids": []},
+      {"description": "Navigate to location B", "goal_id": 1, "dependency_task_ids": [0]},
+      {"description": "Place item A at location B", "goal_id": 1, "dependency_task_ids": [1]}
+    ]
+  }

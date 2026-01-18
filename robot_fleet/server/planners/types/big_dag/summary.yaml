@@ -1,0 +1,31 @@
+# Big DAG Planner Configuration
+# ==============================
+
+name: Big DAG Planner
+
+description: >
+  Generates a single unified DAG that spans ALL goals together. Tasks from
+  different goals can depend on each other, enabling cross-goal optimization.
+  Best for coordinating multiple robots on interrelated objectives.
+
+method_type: foundation model
+
+output_format: >
+  JSON with 'nodes' array. Each node has: id (string like "node0", "node1"),
+  description, goal_id, robot_type (suggested), depends_on (list of node IDs).
+  Unlike DAG planner, dependencies can cross goal boundaries.
+
+prompts:
+  - type: system
+    description: System prompt for unified cross-goal planning
+  - type: user
+    description: Template with multiple goals, robot context, and coordination instructions
+
+example_output: |
+  {
+    "nodes": [
+      {"id": "node0", "description": "Clear path to kitchen", "goal_id": 1, "robot_type": "nav", "depends_on": []},
+      {"id": "node1", "description": "Fetch ingredient from pantry", "goal_id": 2, "robot_type": "moma", "depends_on": ["node0"]},
+      {"id": "node2", "description": "Deliver to kitchen", "goal_id": 2, "robot_type": "nav", "depends_on": ["node1"]}
+    ]
+  }

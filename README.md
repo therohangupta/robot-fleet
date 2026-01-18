@@ -103,6 +103,27 @@ The server will start on port 50051 by default. Check for successful initializat
 - Initial database tables will be created automatically
 - Test writes will confirm database access
 
+## Running the Demo
+
+To quickly set up a demo environment with example robots, world state, and goals:
+
+```bash
+# 1. Start the robot containers
+./robot_fleet/scripts/run_examples_docker.sh
+
+# 2. Populate the fleet with robots, world state, and goals
+./examples/populate_fake.sh
+
+# 3. Start creating plans!
+robotctl plan create dag llm 1,2
+robotctl plan create monolithic cost_based 1,2
+```
+
+The demo sets up:
+- **4 robots**: Pick-place (kitchen), Navigation (mobile), 2x Mobile manipulators
+- **World state**: House layout with kitchen, dining room, living room
+- **Goals**: "prepare breakfast toast" and "clean up dirty dishes"
+
 ## Building Docker Images for Robot Types
 
 ### Building the Pick-Place Robot Image
