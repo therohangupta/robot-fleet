@@ -255,6 +255,8 @@ message Plan {
     string allocation_artifacts = 9;  // JSON string
     string server_logs = 10;
     int32 execution_status = 11;  // 0=not_executed, 1=executing, 2=completed, 3=failed
+    string name = 12;  // User-defined plan name
+    string description = 13;  // User-defined plan description
 }
 
 // --- Service Requests/Responses ---
@@ -263,6 +265,8 @@ message CreatePlanRequest {
     PlanningStrategy planning_strategy = 1;
     AllocationStrategy allocation_strategy = 2;
     repeated int64 goal_ids = 3;
+    string name = 4;  // User-defined plan name (required)
+    string description = 5;  // User-defined plan description (required)
 }
 message CreatePlanResponse {
     Plan plan = 1;

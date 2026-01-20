@@ -1,6 +1,7 @@
 # DAG Planner Configuration
 # ==========================
 
+id: 2
 name: DAG Planner
 
 description: >

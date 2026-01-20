@@ -1,6 +1,7 @@
 # Cost-Based Iterative Allocator Configuration
 # =============================================
 
+id: 3
 name: Cost-Based Iterative Allocator
 
 description: >

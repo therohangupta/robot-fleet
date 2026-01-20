@@ -1,6 +1,7 @@
 # LLM-Based Allocator Configuration
 # ================================
 
+id: 2
 name: LLM-Based Allocator
 
 description: >

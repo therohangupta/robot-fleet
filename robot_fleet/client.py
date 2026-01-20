@@ -1,9 +1,9 @@
 """Fleet Manager gRPC client"""
 import grpc
 from typing import Optional, List, Dict, Union
-from ..proto import fleet_manager_pb2
-from ..proto import fleet_manager_pb2_grpc
-from .printer import PLANNING_STRATEGY_ENUMS, ALLOCATION_STRATEGY_ENUMS
+from .proto import fleet_manager_pb2
+from .proto import fleet_manager_pb2_grpc
+from .cli.printer import PLANNING_STRATEGY_ENUMS, ALLOCATION_STRATEGY_ENUMS
 from collections import defaultdict
 from tabulate import tabulate
 
@@ -157,32 +157,56 @@ class FleetManagerClient:
         return self.stub.GetGoal(request)
 
     # Plan management methods
-    def create_plan(self, planning_strategy: str, goal_ids: List[int], allocation_strategy: str):
+    def create_plan(self, planning_strategy, goal_ids: List[int], allocation_strategy, name: str = "", description: str = ""):
         """Create a new plan with specified planning strategy, allocator, and goals.
-        
+
         Args:
-            planning_strategy: Planning strategy (MONOLITHIC, DAG, or BIG_DAG)
+            planning_strategy: Planning strategy enum value or string
             goal_ids: List of goal IDs to include in the plan
-            allocation_strategy: Allocation strategy to use ('llm' or 'lp')
-        
+            allocation_strategy: Allocation strategy enum value or string
+            name: Plan name (required)
+            description: Plan description (required)
+
         Returns:
             CreatePlanResponse with plan object and error message
         """
         if not isinstance(goal_ids, (list, tuple)):
             goal_ids = [goal_ids]
         goal_ids = [int(gid) for gid in goal_ids]
-        planning_strategy = PLANNING_STRATEGY_ENUMS.get(
-            planning_strategy.lower(),
-            PLANNING_STRATEGY_ENUMS["monolithic"]
-        )
-        allocation_strategy = ALLOCATION_STRATEGY_ENUMS.get(
-            allocation_strategy.lower(),
-            ALLOCATION_STRATEGY_ENUMS["lp"]
-        )
+
+        # Handle planning strategy - accept integers or strings
+        if isinstance(planning_strategy, int):
+            # Already an integer enum value
+            pass
+        elif isinstance(planning_strategy, str):
+            # Map string to enum
+            planning_strategy = PLANNING_STRATEGY_ENUMS.get(
+                planning_strategy.lower(),
+                PLANNING_STRATEGY_ENUMS["monolithic"]
+            )
+        else:
+            # Default fallback
+            planning_strategy = PLANNING_STRATEGY_ENUMS["monolithic"]
+
+        # Handle allocation strategy - accept integers or strings
+        if isinstance(allocation_strategy, int):
+            # Already an integer enum value
+            pass
+        elif isinstance(allocation_strategy, str):
+            # Map string to enum
+            allocation_strategy = ALLOCATION_STRATEGY_ENUMS.get(
+                allocation_strategy.lower(),
+                ALLOCATION_STRATEGY_ENUMS["lp"]
+            )
+        else:
+            # Default fallback
+            allocation_strategy = ALLOCATION_STRATEGY_ENUMS["lp"]
         request = fleet_manager_pb2.CreatePlanRequest(
             planning_strategy=planning_strategy,
             allocation_strategy=allocation_strategy,
-            goal_ids=goal_ids
+            goal_ids=goal_ids,
+            name=name,
+            description=description
         )
         return self.stub.CreatePlan(request)
 

@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useMemo, useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import ReactFlow, {
@@ -29,8 +29,8 @@ import {
 import { Card } from '../components/common/Card'
 import { Button } from '../components/common/Button'
 import { StatusBadge } from '../components/common/StatusBadge'
-import { plansApi, tasksApi, robotsApi } from '../lib/api'
-import { cn } from '../lib/utils'
+import { plansApi, tasksApi, robotsApi, methodsApi } from '../lib/api'
+import { cn, getPlanningStrategyName, getAllocationStrategyName, setMethodData } from '../lib/utils'
 import type { Task, Robot } from '../types'
 
 function TaskNode({ data }: { data: Task & { color: string } }) {
@@ -99,6 +99,22 @@ export function Execution() {
     queryFn: robotsApi.list,
     refetchInterval: 2000,
   })
+
+  // Load method data for strategy name lookups
+  const { data: planners = [] } = useQuery({
+    queryKey: ['planners'],
+    queryFn: () => methodsApi.list().then(methods => methods.filter(m => m.category === 'planner')),
+  })
+
+  const { data: allocators = [] } = useQuery({
+    queryKey: ['allocators'],
+    queryFn: () => methodsApi.list().then(methods => methods.filter(m => m.category === 'allocator')),
+  })
+
+  // Update method data for name lookups
+  useEffect(() => {
+    setMethodData(planners, allocators)
+  }, [planners, allocators])
 
   // Group tasks by status
   const taskGroups = useMemo(() => {
@@ -218,7 +234,7 @@ export function Execution() {
         <div className="flex-1">
           <h1 className="text-2xl font-bold text-white">Plan #{planId} Execution Monitor</h1>
           <p className="text-slate-400">
-            {plan?.planning_strategy} planning • {plan?.allocation_strategy?.toUpperCase()} allocation
+            {getPlanningStrategyName(plan?.planning_strategy || 0)} planning • {getAllocationStrategyName(plan?.allocation_strategy || 0)} allocation
           </p>
         </div>
         <div className="flex items-center gap-2">

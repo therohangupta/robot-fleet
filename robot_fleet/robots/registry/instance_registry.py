@@ -688,15 +688,18 @@ class RobotInstanceRegistry:
         allocation_prompts: Optional[Dict[str, str]] = None,
         planning_artifacts: Optional[Dict] = None,
         allocation_artifacts: Optional[Dict] = None,
-        server_logs: Optional[str] = None
+        server_logs: Optional[str] = None,
+        name: str = "",
+        description: str = ""
     ) -> Optional[fleet_manager_pb2.Plan]:
         """Create a new plan and link it to tasks and optionally goals."""
-        logger.info(f"Attempting to create plan with strategy {planning_strategy} and allocation {allocation_strategy} for tasks {task_ids} and goals {goal_ids}")
+        logger.info(f"Attempting to create plan with strategy {planning_strategy} ({type(planning_strategy)}) and allocation {allocation_strategy} ({type(allocation_strategy)}) for tasks {task_ids} and goals {goal_ids}")
         async with self.async_session_factory() as session:
             async with session.begin():
                 # Convert strategy enum value to its integer representation for storage
-                strategy_int = planning_strategy
-                allocation_int = allocation_strategy
+                strategy_int = int(planning_strategy)
+                allocation_int = int(allocation_strategy)
+                logger.info(f"Converted strategies: planning={strategy_int}, allocation={allocation_int}")
                 print(f"💾 DB CREATE: Storing planning_prompts: {planning_prompts is not None}")
                 print(f"💾 DB CREATE: Storing planning_artifacts: {planning_artifacts is not None}")
                 print(f"💾 DB CREATE: Storing server_logs: {server_logs is not None}")
@@ -708,10 +711,14 @@ class RobotInstanceRegistry:
                     allocation_prompts=allocation_prompts,
                     planning_artifacts=planning_artifacts,
                     allocation_artifacts=allocation_artifacts,
-                    server_logs=server_logs
+                    server_logs=server_logs,
+                    name=name,
+                    description=description
                 )
+                logger.info(f"Creating plan with name='{name}', description='{description}'")
                 session.add(new_plan)
                 await session.flush() # Persist to get plan_id
+                logger.info(f"Plan created with ID: {new_plan.plan_id}")
                 # Link tasks if provided
                 if task_ids:
                     for tid in task_ids:
@@ -819,7 +826,9 @@ class RobotInstanceRegistry:
         allocation_prompts: Optional[Dict[str, str]] = None,
         planning_artifacts: Optional[Dict] = None,
         allocation_artifacts: Optional[Dict] = None,
-        server_logs: Optional[List[str]] = None
+        server_logs: Optional[List[str]] = None,
+        name: Optional[str] = None,
+        description: Optional[str] = None
     ) -> Optional[fleet_manager_pb2.Plan]:
         """Update a plan's information."""
         async with self.async_session_factory() as session:
@@ -852,6 +861,10 @@ class RobotInstanceRegistry:
                     plan_model.allocation_artifacts = allocation_artifacts
                 if server_logs is not None:
                     plan_model.server_logs = "\n".join(server_logs) if isinstance(server_logs, list) else server_logs
+                if name is not None:
+                    plan_model.name = name
+                if description is not None:
+                    plan_model.description = description
                 # Unlink all existing tasks if task_ids is provided
                 if task_ids is not None:
                     # Unlink all current tasks from this plan
@@ -868,6 +881,60 @@ class RobotInstanceRegistry:
                 plan_tasks = [task for task in (await session.execute(select(TaskModel).where(TaskModel.plan_id == plan_id))).scalars().all()]
                 # Convert to proto
                 return plan_model_to_proto(plan_model, plan_tasks)
+
+    @db_retry()
+    async def copy_plan_tasks(self, source_plan_id: int, target_plan_id: int) -> bool:
+        """Copy all tasks from source plan to target plan with new task IDs."""
+        async with self.async_session_factory() as session:
+            async with session.begin():
+                # Get all tasks from the source plan
+                source_tasks = (await session.execute(
+                    select(TaskModel).where(TaskModel.plan_id == source_plan_id)
+                )).scalars().all()
+
+                if not source_tasks:
+                    logger.warning(f"No tasks found in source plan {source_plan_id}")
+                    return True
+
+                # Copy each task to the target plan
+                for source_task in source_tasks:
+                    new_task = TaskModel(
+                        description=source_task.description,
+                        goal_id=source_task.goal_id,
+                        plan_id=target_plan_id,  # Link to target plan
+                        robot_id=source_task.robot_id,
+                        robot_type=source_task.robot_type,
+                        status=source_task.status,
+                        result=source_task.result,
+                        dependency_task_ids=source_task.dependency_task_ids.copy() if source_task.dependency_task_ids else []
+                    )
+                    session.add(new_task)
+
+                await session.flush()
+
+                # Update dependency_task_ids to point to the new task IDs
+                # We need to map old task IDs to new task IDs
+                old_to_new_task_ids = {}
+                all_new_tasks = (await session.execute(
+                    select(TaskModel).where(TaskModel.plan_id == target_plan_id)
+                )).scalars().all()
+
+                # Create mapping from old to new task IDs
+                source_tasks_list = list(source_tasks)
+                for i, (old_task, new_task) in enumerate(zip(source_tasks_list, all_new_tasks)):
+                    old_to_new_task_ids[old_task.task_id] = new_task.task_id
+
+                # Update dependency_task_ids for all new tasks
+                for new_task in all_new_tasks:
+                    if new_task.dependency_task_ids:
+                        new_task.dependency_task_ids = [
+                            old_to_new_task_ids.get(old_id, old_id)
+                            for old_id in new_task.dependency_task_ids
+                        ]
+
+                await session.flush()
+                logger.info(f"Copied {len(source_tasks)} tasks from plan {source_plan_id} to plan {target_plan_id}")
+                return True
 
     @db_retry()
     async def delete_plan(self, plan_id: int) -> bool:

@@ -11,7 +11,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../.."))
 
 logger = logging.getLogger(__name__)
 
-from robot_fleet.cli.client import FleetManagerClient
+from robot_fleet.client import FleetManagerClient
 from robot_fleet.robots.schema.yaml_validator import YAMLValidator
 from robot_fleet.robots.registry.instance_registry import RobotInstanceRegistry
 from robot_fleet.proto import fleet_manager_pb2
@@ -20,23 +20,7 @@ from google.protobuf.json_format import MessageToDict
 import asyncio
 
 
-# Strategy mappings
-PLANNING_STRATEGY_MAP = {
-    "monolithic": fleet_manager_pb2.PlanningStrategy.MONOLITHIC,
-    "dag": fleet_manager_pb2.PlanningStrategy.DAG,
-    "big_dag": fleet_manager_pb2.PlanningStrategy.BIG_DAG,
-    "manual": fleet_manager_pb2.PlanningStrategy.MANUAL,
-}
-
-ALLOCATION_STRATEGY_MAP = {
-    "lp": fleet_manager_pb2.AllocationStrategy.LP,
-    "llm": fleet_manager_pb2.AllocationStrategy.LLM,
-    "cost_based": fleet_manager_pb2.AllocationStrategy.COST_BASED,
-    "none": fleet_manager_pb2.AllocationStrategy.NONE,
-}
-
-PLANNING_STRATEGY_NAMES = {v: k for k, v in PLANNING_STRATEGY_MAP.items()}
-ALLOCATION_STRATEGY_NAMES = {v: k for k, v in ALLOCATION_STRATEGY_MAP.items()}
+# Note: Strategy mappings removed - now using integer enum values directly
 
 TASK_STATUS_MAP = {
     0: "unknown",
@@ -121,8 +105,10 @@ class GRPCBridge:
         """Convert a Plan protobuf to a dictionary."""
         result = {
             "plan_id": plan.plan_id,
-            "planning_strategy": PLANNING_STRATEGY_NAMES.get(plan.planning_strategy, "unknown"),
-            "allocation_strategy": ALLOCATION_STRATEGY_NAMES.get(plan.allocation_strategy, "unknown"),
+            "name": plan.name,
+            "description": plan.description,
+            "planning_strategy": plan.planning_strategy,
+            "allocation_strategy": plan.allocation_strategy,
             "task_ids": list(plan.task_ids),
             "goal_ids": list(plan.goal_ids),
         }
@@ -399,32 +385,48 @@ class GRPCBridge:
     
     def create_plan(
         self,
-        planning_strategy: str,
-        allocation_strategy: str,
-        goal_ids: List[int]
+        planning_strategy: int,
+        allocation_strategy: int,
+        goal_ids: List[int],
+        name: str,
+        description: str
     ) -> Optional[Dict[str, Any]]:
         """Create a new plan."""
+        print(f"DEBUG: Bridge create_plan called with planning={planning_strategy}, allocation={allocation_strategy}, goals={goal_ids}, name={name}, desc={description}")
         try:
+            # Protobuf enum fields accept integers directly
+            planning_enum = planning_strategy
+            allocation_enum = allocation_strategy
+
+            print(f"DEBUG: Converted to enums: planning={planning_enum}, allocation={allocation_enum}")
             response = self.client.create_plan(
-                planning_strategy=planning_strategy,
+                planning_strategy=planning_enum,
                 goal_ids=goal_ids,
-                allocation_strategy=allocation_strategy
+                allocation_strategy=allocation_enum,
+                name=name,
+                description=description
             )
             if response.plan:
-                return self._plan_to_dict(response.plan, include_tasks=True)
+                result = self._plan_to_dict(response.plan, include_tasks=True)
+                return result
+            print("DEBUG: No plan in response")
             return None
         except Exception as e:
-            logger.error(f"Error creating plan: {e}")
+            print(f"DEBUG: Exception in bridge: {e}")
+            import traceback
+            print(f"DEBUG: Traceback: {traceback.format_exc()}")
             return None
     
-    def create_manual_plan(self, goal_ids: List[int] = None) -> Optional[Dict[str, Any]]:
+    def create_manual_plan(self, goal_ids: List[int] = None, name: Optional[str] = None, description: Optional[str] = None) -> Optional[Dict[str, Any]]:
         """Create an empty plan shell for manual task creation.
         Uses MANUAL planning strategy and NONE allocation strategy."""
         try:
             response = self.client.create_plan(
-                planning_strategy="manual",  # MANUAL = no auto-planning
+                planning_strategy=4,  # MANUAL = no auto-planning
                 goal_ids=goal_ids or [],
-                allocation_strategy="none"  # NONE = no auto-allocation
+                allocation_strategy=4,  # NONE = no auto-allocation
+                name=name,
+                description=description
             )
             if response.plan:
                 return self._plan_to_dict(response.plan, include_tasks=False)

@@ -65,18 +65,26 @@ class PlanCreate(BaseModel):
     """
     Request to create a plan using automated planning and allocation.
     """
-    planning_strategy: str = Field(
-        ..., 
-        description="Strategy for task generation: 'monolithic', 'dag', or 'big_dag'"
+    planning_strategy: int = Field(
+        ...,
+        description="Planning strategy enum value: 1=monolithic, 2=dag, 3=big_dag, 4=manual"
     )
-    allocation_strategy: str = Field(
-        ..., 
-        description="Strategy for robot assignment: 'lp', 'llm', 'cost_based', or 'none'"
+    allocation_strategy: int = Field(
+        ...,
+        description="Allocation strategy enum value: 1=lp, 2=llm, 3=cost_based, 4=none"
     )
     goal_ids: List[int] = Field(
-        ..., 
+        ...,
         min_length=1,
         description="List of goal IDs this plan should accomplish"
+    )
+    name: str = Field(
+        ...,
+        description="User-defined name for the plan"
+    )
+    description: str = Field(
+        ...,
+        description="User-defined description for the plan"
     )
 
 
@@ -122,9 +130,17 @@ class ManualPlanCreate(BaseModel):
     Plan goal_ids are derived from the tasks' goal_ids.
     """
     tasks: List[ManualTaskDefinition] = Field(
-        ..., 
+        ...,
         min_length=1,
         description="List of tasks forming the plan's DAG"
+    )
+    name: str = Field(
+        ...,
+        description="User-defined name for the plan"
+    )
+    description: str = Field(
+        ...,
+        description="User-defined description for the plan"
     )
 
 

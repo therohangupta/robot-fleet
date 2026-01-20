@@ -111,7 +111,8 @@ class BasePlanner(ABC):
     #     pass
     
     async def save_plan_to_db(self, plan_json: str, planning_strategy: int, allocation_strategy: int, goal_ids: List[int],
-                             planning_prompts: Dict[str, str] = None, planning_artifacts: Dict = None, server_logs: str = None) -> int:
+                             planning_prompts: Dict[str, str] = None, planning_artifacts: Dict = None, server_logs: str = None,
+                             name: str = "", description: str = "") -> int:
         """
         Parse the plan JSON and save the plan and tasks to the database.
         
@@ -136,7 +137,9 @@ class BasePlanner(ABC):
                 task_ids=[],  # Will be populated later
                 planning_prompts=self.planning_prompts,
                 planning_artifacts=self.planning_artifacts,
-                server_logs="\n".join(self.server_logs) if self.server_logs else None
+                server_logs="\n".join(self.server_logs) if self.server_logs else None,
+                name=name,
+                description=description
             )
             
             if not plan:

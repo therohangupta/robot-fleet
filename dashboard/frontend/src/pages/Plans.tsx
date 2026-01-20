@@ -1,18 +1,19 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation, useSearchParams } from 'react-router-dom'
 import {
   Plus, Play, Trash2, CheckCircle,
-  AlertCircle, Users, Zap, AlertTriangle, Copy, Search
+  AlertCircle, Users, Zap, AlertTriangle, Copy, Search, Loader2, ChevronDown, Rocket
 } from 'lucide-react'
 import { Card } from '../components/common/Card'
 import { Button } from '../components/common/Button'
 import { Modal } from '../components/common/Modal'
 import { EmptyState } from '../components/common/EmptyState'
+import { MethodDetailModal } from './Planners'
 import { plansApi, goalsApi, robotsApi, methodsApi } from '../lib/api'
-import { cn } from '../lib/utils'
+import { cn, getPlanningStrategyName, getAllocationStrategyName, getPlanningMethodId, getAllocationMethodId, setMethodData } from '../lib/utils'
 import { useRealtimeUpdates } from '../lib/api'
-import type { Robot, Goal, PlanStatus } from '../types'
+import type { Robot, Goal, PlanStatus, PlanAllocationStatus } from '../types'
 import type { MethodSummary } from '../lib/api'
 
 interface LocalStrategy {
@@ -67,13 +68,34 @@ function MethodSelectionCard({
 export function Plans() {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [allocatePlanId, setAllocatePlanId] = useState<number | null>(null)
+  const [copyingPlanId, setCopyingPlanId] = useState<number | null>(null)
   const [planStatuses, setPlanStatuses] = useState<Record<number, PlanStatus>>({})
+  const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState<'all' | 'unallocated' | 'allocated' | 'completed'>('all')
+  const [sortBy, setSortBy] = useState<'id' | 'created_at'>('created_at')
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc')
+  const [selectedMethod, setSelectedMethod] = useState<{ id: number; type: 'planner' | 'allocator' | null } | null>(null)
   const navigate = useNavigate()
   const queryClient = useQueryClient()
+  const [searchParams] = useSearchParams()
 
   // Enable real-time updates
   const { isConnected } = useRealtimeUpdates()
+
+  // Handle URL query parameters for method modal
+  useEffect(() => {
+    const method = searchParams.get('method')
+    const methodType = searchParams.get('method_type') as 'planner' | 'allocator' | null
+    if (method) {
+      const methodId = parseInt(method, 10)
+      if (!isNaN(methodId)) {
+        setSelectedMethod({ id: methodId, type: methodType })
+      }
+    } else {
+      setSelectedMethod(null)
+    }
+  }, [searchParams])
+
 
   const { data: allPlans = [], isLoading } = useQuery({
     queryKey: ['plans'],
@@ -85,42 +107,81 @@ export function Plans() {
 
   const getStatus = (planId: number) => planStatuses[planId]
 
-  // Filter plans based on status - work with available data
-  const plans = allPlans.filter(plan => {
-    try {
-      // Validate plan data
-      if (!plan || typeof plan.plan_id !== 'number') {
-        console.warn('Invalid plan data:', plan)
-        return false
-      }
+  // Filter and sort plans based on search, status, and sort criteria
+  const plans = useMemo(() => {
+    let filtered = allPlans
 
-      let shouldInclude = true
+    // Apply search filter first
+    if (searchTerm.trim()) {
+      const searchLower = searchTerm.toLowerCase()
+      filtered = filtered.filter(plan => {
+        // Search in plan name, description, and ID
+        const nameMatch = plan.name?.toLowerCase().includes(searchLower)
+        const descMatch = plan.description?.toLowerCase().includes(searchLower)
+        const idMatch = plan.plan_id.toString().includes(searchTerm)
 
-      if (statusFilter === 'all') {
-        shouldInclude = true
-      } else if (statusFilter === 'completed') {
-        shouldInclude = plan.execution_status === 'completed'
-      } else if (statusFilter === 'executing') {
-        shouldInclude = plan.execution_status === 'executing'
-      } else if (statusFilter === 'allocated') {
-        const status = getStatus(plan.plan_id)
-        const executionStatus = plan.execution_status || 'not_executed' // Default to not_executed if not set
-        shouldInclude = status?.status === 'fully_allocated' && (executionStatus === 'not_executed' || executionStatus === 'executing')
-      } else if (statusFilter === 'unallocated') {
-        const status = getStatus(plan.plan_id)
-        // If we don't have status data yet, assume unallocated for safety
-        shouldInclude = !hasPlanStatuses || status?.status !== 'fully_allocated'
-      } else {
-        console.warn('Unknown statusFilter:', statusFilter)
-        shouldInclude = true // Default to showing in unknown filter
-      }
-
-      return shouldInclude
-    } catch (error) {
-      console.error('Error filtering plan:', plan?.plan_id, error)
-      return statusFilter === 'all' // Include in 'all' if filtering fails
+        return nameMatch || descMatch || idMatch
+      })
     }
-  })
+
+    // Apply status filter
+    filtered = filtered.filter(plan => {
+      try {
+        // Validate plan data
+        if (!plan || typeof plan.plan_id !== 'number') {
+          console.warn('Invalid plan data:', plan)
+          return false
+        }
+
+        let shouldInclude = true
+
+        if (statusFilter === 'all') {
+          shouldInclude = true
+        } else if (statusFilter === 'completed') {
+          shouldInclude = plan.execution_status === 'completed'
+        } else if (statusFilter === 'executing') {
+          shouldInclude = plan.execution_status === 'executing'
+        } else if (statusFilter === 'allocated') {
+          const status = getStatus(plan.plan_id)
+          const executionStatus = plan.execution_status || 'not_executed' // Default to not_executed if not set
+          shouldInclude = status?.status === 'fully_allocated' && (executionStatus === 'not_executed' || executionStatus === 'executing')
+        } else if (statusFilter === 'unallocated') {
+          const status = getStatus(plan.plan_id)
+          // If we don't have status data yet, assume unallocated for safety
+          shouldInclude = !hasPlanStatuses || status?.status !== 'fully_allocated'
+        } else {
+          console.warn('Unknown statusFilter:', statusFilter)
+          shouldInclude = true // Default to showing in unknown filter
+        }
+
+        return shouldInclude
+      } catch (error) {
+        console.error('Error filtering plan:', plan?.plan_id, error)
+        return statusFilter === 'all' // Include in 'all' if filtering fails
+      }
+    })
+
+    // Apply sorting
+    return filtered.sort((a, b) => {
+      let aValue: any, bValue: any
+
+      if (sortBy === 'id') {
+        aValue = a.plan_id
+        bValue = b.plan_id
+      } else if (sortBy === 'created_at') {
+        aValue = new Date(a.created_at || 0)
+        bValue = new Date(b.created_at || 0)
+      } else {
+        return 0
+      }
+
+      if (sortOrder === 'asc') {
+        return aValue > bValue ? 1 : aValue < bValue ? -1 : 0
+      } else {
+        return aValue < bValue ? 1 : aValue > bValue ? -1 : 0
+      }
+    })
+  }, [allPlans, searchTerm, statusFilter, sortBy, sortOrder, hasPlanStatuses])
 
   const { data: robots = [] } = useQuery({
     queryKey: ['robots'],
@@ -161,7 +222,15 @@ export function Plans() {
           const status = await plansApi.getStatus(plan.plan_id)
           statuses[plan.plan_id] = status
         } catch (e) {
-          // Ignore errors for individual plans
+          // Set a default status for failed requests to prevent UI errors
+          statuses[plan.plan_id] = {
+            plan_id: plan.plan_id,
+            status: 'unknown' as PlanAllocationStatus,
+            total_tasks: 0,
+            allocated_tasks: 0,
+            unallocated_task_ids: [],
+            is_executable: false
+          }
         }
       }
       setPlanStatuses(statuses)
@@ -203,9 +272,17 @@ export function Plans() {
   })
 
   const copyPlanMutation = useMutation({
-    mutationFn: plansApi.copy,
+    mutationFn: ({ planId, name, description }: { planId: number; name: string; description: string }) =>
+      plansApi.copy(planId, { name, description }),
+    onMutate: ({ planId }) => {
+      setCopyingPlanId(planId)
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['plans'] })
+      setCopyingPlanId(null)
+    },
+    onError: () => {
+      setCopyingPlanId(null)
     },
   })
 
@@ -247,6 +324,7 @@ export function Plans() {
     )
   }
 
+
   return (
     <div className="p-6 space-y-6">
       {/* Header */}
@@ -254,13 +332,49 @@ export function Plans() {
         <div>
           <h1 className="text-2xl font-bold text-white">Plans</h1>
           <p className="text-slate-400 mt-1">
-            Create and manage robot task plans for your goals
+            {plans.length} of {allPlans.length} plans
+            {searchTerm && ` matching "${searchTerm}"`}
           </p>
         </div>
         <Button onClick={() => setIsModalOpen(true)}>
           <Plus className="w-4 h-4 mr-2" />
           New Plan
         </Button>
+      </div>
+
+      {/* Search and Sort Controls */}
+      <div className="flex flex-col sm:flex-row gap-4">
+        {/* Search Input */}
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400" />
+          <input
+            type="text"
+            placeholder="Search plans by name, description, or ID..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full pl-10 pr-4 py-2 bg-slate-800/50 border border-slate-600/50 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:border-cyber-500 focus:ring-1 focus:ring-cyber-500/50"
+          />
+        </div>
+
+        {/* Sort Controls */}
+        <div className="flex gap-2">
+          <select
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value as 'id' | 'created_at')}
+            className="px-3 py-2 bg-slate-800/50 border border-slate-600/50 rounded-lg text-white focus:outline-none focus:border-cyber-500 focus:ring-1 focus:ring-cyber-500/50"
+          >
+            <option value="created_at">Date Created</option>
+            <option value="id">Plan ID</option>
+          </select>
+
+          <button
+            onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
+            className="px-3 py-2 bg-slate-800/50 border border-slate-600/50 rounded-lg text-white hover:bg-slate-700/50 transition-colors flex items-center gap-1"
+          >
+            {sortOrder === 'asc' ? '↑' : '↓'}
+            <ChevronDown className="w-4 h-4" />
+          </button>
+        </div>
       </div>
 
       {/* Status Filter */}
@@ -308,207 +422,299 @@ export function Plans() {
         ))}
       </div>
 
+      
+
       {/* Plans Grid */}
       {plans.length === 0 ? (
-        <EmptyState
-          icon={<div>📋</div>}
-          title="No plans found"
-          description="No plans found. Try adjusting your filters or create a new plan."
-          action={
-            <Button onClick={() => setIsModalOpen(true)}>
-              <Plus className="w-4 h-4 mr-2" />
-              Create Plan
+        allPlans.length === 0 ? (
+          <EmptyState
+            icon={<div>📋</div>}
+            title="No plans created"
+            description="Create your first plan to define robot task execution sequences."
+            action={
+              <Button onClick={() => setIsModalOpen(true)}>
+                <Plus className="w-4 h-4 mr-2" />
+                Create Plan
+              </Button>
+            }
+          />
+        ) : (
+          <div className="text-center py-12 text-slate-500">
+            <Search className="w-12 h-12 text-slate-500 mx-auto mb-4 opacity-50" />
+            <p className="text-lg font-medium text-slate-400 mb-2">No plans match your search</p>
+            <p className="text-slate-500 mb-4">Try adjusting your search terms or clearing the filter</p>
+            <Button
+              variant="secondary"
+              onClick={() => setSearchTerm('')}
+              className="mr-2"
+            >
+              Clear Search
             </Button>
-          }
-        />
+            <Button onClick={() => setStatusFilter('all')}>
+              Show All Plans
+            </Button>
+          </div>
+        )
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {plans.map((plan) => {
-            try {
-              return (
-                <Card key={plan.plan_id} className="p-4 hover:bg-slate-800/50 transition-colors cursor-pointer"
-                      onClick={() => navigate(`/plans/${plan.plan_id}`)}>
-              {/* Plan Header */}
-              <div className="flex items-start justify-between mb-3">
-                <div className="flex-1">
-                  <h3 className="font-semibold text-white text-lg">Plan #{plan.plan_id}</h3>
-                  <p className="text-sm text-slate-400">
-                    {Array.isArray(plan.goal_ids) ? new Set(plan.goal_ids).size : 0} goals • {Array.isArray(plan.task_ids) ? plan.task_ids.length : 0} tasks
-                  </p>
-                </div>
+            // Safe rendering with fallbacks
+            const status = getStatus(plan.plan_id)
+            const executionStatus = plan.execution_status || 'not_executed'
+            const goalCount = Array.isArray(plan.goal_ids) ? new Set(plan.goal_ids).size : 0
+            const taskCount = Array.isArray(plan.task_ids) ? plan.task_ids.length : 0
 
-                {/* Allocation Status Badge */}
-                {(() => {
-                  const status = getStatus(plan.plan_id)
-                  if (!status) return null
+            // Determine badge safely
+            let badgeConfig = { bg: 'bg-slate-500/10', border: 'border-slate-500/30', text: 'text-slate-400', label: 'Unknown', icon: AlertTriangle }
 
-                  // Determine badge based on allocation, execution status, and robot health
-                  let badgeConfig;
-                  const executionStatus = plan.execution_status || 'not_executed'
+            if (executionStatus === 'completed') {
+              badgeConfig = { bg: 'bg-blue-500/10', border: 'border-blue-500/30', text: 'text-blue-400', label: 'Completed', icon: CheckCircle }
+            } else if (executionStatus === 'executing') {
+              badgeConfig = { bg: 'bg-purple-500/10', border: 'border-purple-500/30', text: 'text-purple-400', label: 'Running', icon: Play }
+            } else if (status?.status === 'fully_allocated') {
+              // Safe robot availability check
+              let assignedRobotIds: string[] = []
+              try {
+                if (plan.allocation_artifacts?.final_allocation?.allocations) {
+                  const allocations = plan.allocation_artifacts.final_allocation.allocations
+                  assignedRobotIds = allocations
+                    .map((allocation: any) => allocation?.robot_id)
+                    .filter((robotId: string) => robotId && robotId !== 'unassigned') || []
+                  assignedRobotIds = [...new Set(assignedRobotIds)]
+                }
+              } catch (e) {
+                assignedRobotIds = []
+              }
 
-                  if (executionStatus === 'completed') {
-                    badgeConfig = { bg: 'bg-blue-500/10', border: 'border-blue-500/30', text: 'text-blue-400', label: 'Completed', icon: CheckCircle }
-                  } else if (executionStatus === 'executing') {
-                    badgeConfig = { bg: 'bg-purple-500/10', border: 'border-purple-500/30', text: 'text-purple-400', label: 'Running', icon: Play }
-                  } else if (status.status === 'fully_allocated') {
-                    // Check if robots are available for execution
-                    // Use allocation artifacts to get robot assignments since plan.tasks isn't available in listing
-                    let assignedRobotIds: string[] = []
+              const robotsReady = assignedRobotIds.length > 0 && assignedRobotIds.every((robotId) => {
+                const robot = robots?.find(r => r.robot_id === robotId)
+                const health = robotHealth ? robotHealth[robotId] : undefined
+                return robot && health?.reachable === true
+              })
 
-                    if (plan.allocation_artifacts?.final_allocation?.allocations) {
-                      // Extract robot IDs from final allocation
-                      const allocations = plan.allocation_artifacts.final_allocation.allocations
-                      assignedRobotIds = allocations
-                        .map((allocation: any) => allocation.robot_id)
-                        .filter((robotId: string) => robotId && robotId !== 'unassigned')
-                    }
-
-                    // Remove duplicates
-                    assignedRobotIds = [...new Set(assignedRobotIds)]
-
-                    const robotsReady = assignedRobotIds.length > 0 && assignedRobotIds.every((robotId) => {
-                      const robot = robots?.find(r => r.robot_id === robotId)
-                      const health = robotHealth ? robotHealth[robotId] : undefined
-                      return robot && health?.reachable === true
-                    })
-
-                    if (robotsReady) {
-                      badgeConfig = { bg: 'bg-emerald-500/10', border: 'border-emerald-500/30', text: 'text-emerald-400', label: 'Ready', icon: Zap }
-                    } else {
-                      badgeConfig = { bg: 'bg-yellow-500/10', border: 'border-yellow-500/30', text: 'text-yellow-400', label: 'Robots Offline', icon: AlertTriangle }
-                    }
-                  } else if (status.status === 'partially_allocated') {
-                    badgeConfig = { bg: 'bg-orange-500/10', border: 'border-orange-500/30', text: 'text-orange-400', label: 'Partial', icon: AlertCircle }
-                  } else if (status.status === 'unallocated') {
-                    badgeConfig = { bg: 'bg-amber-500/10', border: 'border-amber-500/30', text: 'text-amber-400', label: 'Needs Allocation', icon: Users }
-                  } else {
-                    badgeConfig = { bg: 'bg-slate-500/10', border: 'border-slate-500/30', text: 'text-slate-400', label: 'No Tasks', icon: AlertTriangle }
-                  }
-
-                  const BadgeIcon = badgeConfig.icon
-                  return (
-                    <span className={cn('px-2 py-0.5 rounded text-xs flex items-center gap-1', badgeConfig.bg, 'border', badgeConfig.border, badgeConfig.text)}>
-                      <BadgeIcon className="w-3 h-3" />
-                      {badgeConfig.label}
-                    </span>
-                  )
-                })()}
-              </div>
-
-              {/* Task allocation summary */}
-              {(() => {
-                const status = getStatus(plan.plan_id)
-                return status && status.total_tasks > 0 ? (
-                  <p className="text-sm text-slate-400 mb-3">
-                    <span className={cn(
-                      status.is_executable ? 'text-emerald-400' : 'text-amber-400'
-                    )}>
-                      {status.allocated_tasks}/{status.total_tasks} tasks allocated
-                    </span>
-                  </p>
-                ) : null
-              })()}
-
-              {/* Action Buttons */}
-              <div className="flex items-center gap-2">
-                {/* Allocate Button */}
-                {getStatus(plan.plan_id)?.status !== 'fully_allocated' && (
-                  <Button
-                    size="sm"
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      setAllocatePlanId(plan.plan_id)
-                    }}
-                    disabled={allocateMutation.isPending}
-                  >
-                    <Users className="w-3.5 h-3.5" />
-                    Allocate
-                  </Button>
-                )}
-
-                {/* Execute Button */}
-                {getStatus(plan.plan_id)?.status === 'fully_allocated' &&
-                 plan.execution_status !== 'completed' &&
-                 plan.execution_status !== 'executing' && (
-                  <Button
-                    size="sm"
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      startMutation.mutate(plan.plan_id)
-                    }}
-                    disabled={startMutation.isPending || (() => {
-                      // Check if ALL assigned robots are available and reachable
-                      // Use allocation artifacts to get robot assignments
-                      let assignedRobotIds: string[] = []
-
-                      if (plan.allocation_artifacts?.final_allocation?.allocations) {
-                        // Extract robot IDs from final allocation
-                        const allocations = plan.allocation_artifacts.final_allocation.allocations
-                        assignedRobotIds = allocations
-                          .map((allocation: any) => allocation.robot_id)
-                          .filter((robotId: string) => robotId && robotId !== 'unassigned')
-                      }
-
-                      // Remove duplicates
-                      assignedRobotIds = [...new Set(assignedRobotIds)]
-
-                      // Can't execute without robots
-                      if (assignedRobotIds.length === 0) return true
-
-                      // Must have ALL robots reachable
-                      return !assignedRobotIds.every((robotId) => {
-                        const robot = robots?.find(r => r.robot_id === robotId)
-                        const health = robotHealth ? robotHealth[robotId] : undefined
-                        return robot && health?.reachable === true
-                      })
-                    })()}
-                  >
-                    <Play className="w-3.5 h-3.5" />
-                    Execute
-                  </Button>
-                )}
-
-                <div className="flex items-center gap-2 ml-auto">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      copyPlanMutation.mutate(plan.plan_id)
-                    }}
-                    disabled={copyPlanMutation.isPending}
-                    className="text-green-400 hover:text-green-300 hover:bg-green-500/10"
-                    title="Copy plan for re-execution"
-                  >
-                    <Copy className="w-4 h-4" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      deleteMutation.mutate(plan.plan_id)
-                    }}
-                    disabled={deleteMutation.isPending}
-                    className="text-red-400 hover:text-red-300 hover:bg-red-500/10"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
-                </div>
-              </div>
-                </Card>
-              )
-            } catch (error) {
-              console.error('Error rendering plan card:', plan.plan_id, error)
-              return (
-                <Card key={plan.plan_id} className="p-4 bg-red-900/20 border-red-500/30">
-                  <div className="text-red-400">
-                    Error loading plan #{plan.plan_id}
-                  </div>
-                </Card>
-              )
+              if (robotsReady) {
+                badgeConfig = { bg: 'bg-emerald-500/10', border: 'border-emerald-500/30', text: 'text-emerald-400', label: 'Ready', icon: Zap }
+              } else {
+                badgeConfig = { bg: 'bg-yellow-500/10', border: 'border-yellow-500/30', text: 'text-yellow-400', label: 'Robots Offline', icon: AlertTriangle }
+              }
+            } else if (status?.status === 'partially_allocated') {
+              badgeConfig = { bg: 'bg-orange-500/10', border: 'border-orange-500/30', text: 'text-orange-400', label: 'Partial', icon: AlertCircle }
+            } else if (status?.status === 'unallocated') {
+              badgeConfig = { bg: 'bg-amber-500/10', border: 'border-amber-500/30', text: 'text-amber-400', label: 'Needs Allocation', icon: Users }
+            } else if (status?.status === 'empty' || (status?.total_tasks || 0) === 0) {
+              badgeConfig = { bg: 'bg-slate-500/10', border: 'border-slate-500/30', text: 'text-slate-400', label: 'No Tasks', icon: AlertTriangle }
             }
-          })}
+
+            return (
+              <Card key={plan.plan_id} className="p-4 hover:bg-slate-800/50 transition-colors cursor-pointer"
+                    onClick={() => navigate(`/plans/${plan.plan_id}`)}>
+                {/* Plan Header */}
+                <div className="flex items-start justify-between mb-3">
+                  {/* Plan ID Badge - Left */}
+                  <span className="px-2 py-1 bg-yellow-500/20 border border-yellow-500/40 text-yellow-300 rounded text-xs font-semibold">
+                    P{plan.plan_id}
+                  </span>
+
+                  {/* Action Buttons - Top Right */}
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        const copyName = plan.name ? `${plan.name} (Copy)` : `Plan #${plan.plan_id} (Copy)`
+                        const copyDescription = plan.description || 'Copy of plan'
+
+                        copyPlanMutation.mutate({
+                          planId: plan.plan_id,
+                          name: copyName,
+                          description: copyDescription
+                        })
+                      }}
+                      disabled={copyingPlanId !== null}
+                      className="text-green-400 hover:text-green-300 hover:bg-green-500/10 p-2 h-8 w-8"
+                      title="Copy plan for re-execution"
+                    >
+                      {copyingPlanId === plan.plan_id ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <Copy className="w-4 h-4" />
+                      )}
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        deleteMutation.mutate(plan.plan_id)
+                      }}
+                      disabled={deleteMutation.isPending}
+                      className="text-red-400 hover:text-red-300 hover:bg-red-500/10 p-2 h-8 w-8"
+                      title="Delete plan"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Plan Name and Execution Status Row */}
+                <div className="flex items-start justify-between mb-2">
+                  {/* Plan Name and Description - Left */}
+                  <div className="flex-1">
+                    <h3 className="font-semibold text-white text-sm mb-1 line-clamp-1">
+                      {plan.name}
+                    </h3>
+                    {plan.description && (
+                      <p className="text-xs text-slate-400 line-clamp-2">
+                        {plan.description}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Execution Status - Right */}
+                  <span className={cn('px-2 py-1 rounded text-xs flex items-center gap-1 font-medium ml-2', badgeConfig.bg, 'border', badgeConfig.border, badgeConfig.text)}>
+                    <badgeConfig.icon className="w-3 h-3" />
+                    {badgeConfig.label}
+                  </span>
+                </div>
+
+                {/* Strategy Information - Tag Style */}
+                <div className="flex items-center gap-2 mb-4">
+                  {plan.planning_strategy && (
+                    <button
+                      className="px-3 py-1.5 bg-blue-500/20 border border-blue-500/40 text-blue-300 rounded-lg text-sm font-semibold hover:bg-blue-500/30 transition-colors"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        const methodId = getPlanningMethodId(plan.planning_strategy)
+                        console.log('Planning method clicked:', plan.planning_strategy, '-> methodId:', methodId)
+                        navigate(`/plans?plan=${plan.plan_id}&method_type=planner&method=${methodId}`)
+                      }}
+                    >
+                      {getPlanningStrategyName(plan.planning_strategy)}
+                    </button>
+                  )}
+                  {status?.status && status.status !== 'unallocated' && plan.allocation_strategy && plan.allocation_strategy !== 4 && (
+                    <button
+                      className="px-3 py-1.5 bg-purple-500/20 border border-purple-500/40 text-purple-300 rounded-lg text-sm font-semibold hover:bg-purple-500/30 transition-colors"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        const methodId = getAllocationMethodId(plan.allocation_strategy)
+                        navigate(`/plans?plan=${plan.plan_id}&method_type=allocator&method=${methodId}`)
+                      }}
+                    >
+                      {getAllocationStrategyName(plan.allocation_strategy)}
+                    </button>
+                  )}
+                </div>
+
+                {/* Statistics Boxes - 3 Columns */}
+                <div className="grid grid-cols-3 gap-2 mb-4">
+                  {/* Goals Box */}
+                  <div className="bg-emerald-500/10 border border-emerald-500/20 rounded p-2 text-center">
+                    <div className="text-lg font-bold text-emerald-300 mb-1">
+                      {goalCount}
+                    </div>
+                    <div className="text-xs text-emerald-400 font-medium">
+                      Goals
+                    </div>
+                  </div>
+
+                  {/* Tasks Box */}
+                  <div className="bg-blue-500/10 border border-blue-500/20 rounded p-2 text-center">
+                    <div className="text-lg font-bold text-blue-300 mb-1">
+                      {taskCount}
+                    </div>
+                    <div className="text-xs text-blue-400 font-medium">
+                      Tasks
+                    </div>
+                  </div>
+
+                  {/* Allocation Box */}
+                  {status && status.total_tasks > 0 ? (
+                    <div className="bg-slate-500/10 border border-slate-500/20 rounded p-2 text-center">
+                      <div className="text-lg font-bold text-slate-300 mb-1">
+                        {Math.round((status.allocated_tasks / status.total_tasks) * 100)}%
+                      </div>
+                      <div className="text-xs text-slate-400">
+                        Allocated
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="bg-slate-500/10 border border-slate-500/20 rounded p-2 text-center opacity-50">
+                      <div className="text-lg font-bold text-slate-500 mb-1">
+                        0%
+                      </div>
+                      <div className="text-xs text-slate-500">
+                        Allocated
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Action Buttons - Full Width */}
+                <div className="w-full">
+                  {/* Allocate Button */}
+                  {status?.status !== 'fully_allocated' && (
+                    <Button
+                      className="w-full"
+                      size="sm"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        setAllocatePlanId(plan.plan_id)
+                      }}
+                      disabled={allocateMutation.isPending}
+                    >
+                      <Users className="w-3.5 h-3.5 mr-2" />
+                      Allocate Tasks to Robots
+                    </Button>
+                  )}
+
+                  {/* Execute Button */}
+                  {getStatus(plan.plan_id)?.status === 'fully_allocated' &&
+                   plan.execution_status !== 'completed' &&
+                   plan.execution_status !== 'executing' && (
+                    <Button
+                      className="w-full"
+                      size="sm"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        startMutation.mutate(plan.plan_id)
+                      }}
+                      disabled={startMutation.isPending || (() => {
+                        // Check if ALL assigned robots are available and reachable
+                        // Use allocation artifacts to get robot assignments
+                        let assignedRobotIds: string[] = []
+
+                        if (plan.allocation_artifacts?.final_allocation?.allocations) {
+                          // Extract robot IDs from final allocation
+                          const allocations = plan.allocation_artifacts.final_allocation.allocations
+                          assignedRobotIds = allocations
+                            .map((allocation: any) => allocation.robot_id)
+                            .filter((robotId: string) => robotId && robotId !== 'unassigned')
+                        }
+
+                        // Remove duplicates
+                        assignedRobotIds = [...new Set(assignedRobotIds)]
+
+                        // Can't execute without robots
+                        if (assignedRobotIds.length === 0) return true
+
+                        // Must have ALL robots reachable
+                        return !assignedRobotIds.every((robotId) => {
+                          const robot = robots?.find(r => r.robot_id === robotId)
+                          const health = robotHealth ? robotHealth[robotId] : undefined
+                          return robot && health?.reachable === true
+                        })
+                      })()}
+                    >
+                      <Play className="w-3.5 h-3.5 mr-2" />
+                      Execute Plan
+                    </Button>
+                  )}
+                </div>
+              </Card>
+              )
+           })}
         </div>
       )}
 
@@ -548,6 +754,30 @@ export function Plans() {
           />
         </Modal>
       )}
+
+      {/* Method Detail Modal */}
+      <MethodDetailModal
+        methodId={selectedMethod?.id || null}
+        methodType={selectedMethod?.type || undefined}
+        isOpen={!!selectedMethod}
+        onClose={() => {
+          setSelectedMethod(null)
+          navigate('/plans', { replace: true })
+        }}
+      />
+
+      {/* Copying Progress Modal */}
+      {copyingPlanId && (
+        <Modal isOpen={true} onClose={() => {}} title="" size="sm">
+          <div className="flex flex-col items-center justify-center py-8">
+            <Loader2 className="w-8 h-8 animate-spin text-emerald-400 mb-4" />
+            <h3 className="text-lg font-semibold text-white mb-2">Copying Plan #{copyingPlanId}</h3>
+            <p className="text-slate-400 text-center">
+              Creating a duplicate plan for re-execution...
+            </p>
+          </div>
+        </Modal>
+      )}
     </div>
   )
 }
@@ -566,12 +796,14 @@ interface CreatePlanFormProps {
 
 function CreatePlanForm({ goals, strategies, onSubmit, onCancel, isLoading }: CreatePlanFormProps) {
   const [selectedGoals, setSelectedGoals] = useState<number[]>([])
-  const [selectedPlanner, setSelectedPlanner] = useState<string>('')
-  const [selectedAllocator, setSelectedAllocator] = useState<string>('')
+  const [selectedPlanner, setSelectedPlanner] = useState<number | null>(null)
+  const [selectedAllocator, setSelectedAllocator] = useState<number | null>(null)
   const [skipAllocation, setSkipAllocation] = useState<boolean>(false)
   const [plannerFilter, setPlannerFilter] = useState<string>('all')
   const [allocatorFilter, setAllocatorFilter] = useState<string>('all')
   const [goalSearch, setGoalSearch] = useState<string>('')
+  const [planName, setPlanName] = useState<string>('')
+  const [planDescription, setPlanDescription] = useState<string>('')
 
   // Load available planners and allocators dynamically
   const { data: planners = [] } = useQuery({
@@ -586,6 +818,11 @@ function CreatePlanForm({ goals, strategies, onSubmit, onCancel, isLoading }: Cr
 
   // Allocation options (only real allocators)
   const allocationOptions = [...allocators]
+
+  // Update method data for name lookups
+  useEffect(() => {
+    setMethodData(planners, allocators)
+  }, [planners, allocators])
 
   // Filter planners and allocators by method type
   const filteredPlanners = planners.filter(p =>
@@ -608,17 +845,47 @@ function CreatePlanForm({ goals, strategies, onSubmit, onCancel, isLoading }: Cr
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    if (selectedGoals.length === 0 || !selectedPlanner) return
+    if (selectedGoals.length === 0 || selectedPlanner === null || !planName.trim() || !planDescription.trim()) return
 
     onSubmit({
       goal_ids: selectedGoals,
-      planning_strategy: selectedPlanner,
-      allocation_strategy: skipAllocation ? 'none' : (selectedAllocator || 'none'),
+      planning_strategy: selectedPlanner!,
+      allocation_strategy: skipAllocation ? 4 : (selectedAllocator || 4), // 4 = NONE
+      name: planName.trim(),
+      description: planDescription.trim(),
     })
   }
 
   return (
     <div className="space-y-6 max-h-[75vh] overflow-y-auto">
+      {/* Plan Name and Description */}
+      <div className="space-y-4">
+        <div>
+          <label className="block text-sm font-medium text-slate-300 mb-2">
+            Plan Name <span className="text-red-400">*</span>
+          </label>
+          <input
+            type="text"
+            value={planName}
+            onChange={(e) => setPlanName(e.target.value)}
+            placeholder="Enter a descriptive name for your plan"
+            className="w-full px-4 py-3 bg-slate-700/50 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-cyber-500 focus:border-transparent transition-all"
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-slate-300 mb-2">
+            Description <span className="text-red-400">*</span>
+          </label>
+          <textarea
+            value={planDescription}
+            onChange={(e) => setPlanDescription(e.target.value)}
+            rows={3}
+            placeholder="Describe what this plan accomplishes..."
+            className="w-full px-4 py-3 bg-slate-700/50 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-cyber-500 focus:border-transparent transition-all resize-none"
+          />
+        </div>
+      </div>
+
       {/* Planning and Allocation Methods - Two Column Layout */}
       <div>
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
@@ -650,8 +917,8 @@ function CreatePlanForm({ goals, strategies, onSubmit, onCancel, isLoading }: Cr
                 <MethodSelectionCard
                   key={planner.type}
                   method={planner}
-                  isSelected={selectedPlanner === planner.type}
-                  onClick={() => setSelectedPlanner(planner.type)}
+                  isSelected={selectedPlanner === planner.id}
+                  onClick={() => setSelectedPlanner(planner.id)}
                 />
               ))}
             </div>
@@ -685,8 +952,8 @@ function CreatePlanForm({ goals, strategies, onSubmit, onCancel, isLoading }: Cr
                 <MethodSelectionCard
                   key={allocator.type}
                   method={allocator}
-                  isSelected={selectedAllocator === allocator.type}
-                  onClick={() => setSelectedAllocator(allocator.type)}
+                  isSelected={selectedAllocator === allocator.id}
+                  onClick={() => setSelectedAllocator(allocator.id)}
                 />
               ))}
             </div>
@@ -703,7 +970,7 @@ function CreatePlanForm({ goals, strategies, onSubmit, onCancel, isLoading }: Cr
                 onClick={() => {
                   setSkipAllocation(!skipAllocation)
                   if (!skipAllocation) {
-                    setSelectedAllocator('') // Clear any selected allocator when skipping
+                    setSelectedAllocator(null) // Clear any selected allocator when skipping
                   }
                 }}
               >
@@ -823,10 +1090,24 @@ function CreatePlanForm({ goals, strategies, onSubmit, onCancel, isLoading }: Cr
           </Button>
           <Button
             onClick={handleSubmit}
-            disabled={isLoading || selectedGoals.length === 0 || !selectedPlanner || (!selectedAllocator && !skipAllocation)}
+            disabled={isLoading || selectedGoals.length === 0 || selectedPlanner === null || (!selectedAllocator && !skipAllocation) || !planName.trim() || !planDescription.trim()}
+            title={
+              isLoading ? 'Creating plan...' :
+              selectedGoals.length === 0 ? 'Select at least one goal' :
+              selectedPlanner === null ? 'Select a planning method' :
+              (!selectedAllocator && !skipAllocation) ? 'Select an allocation method or skip allocation' :
+              !planName.trim() ? 'Enter a plan name' :
+              !planDescription.trim() ? 'Enter a plan description' :
+              'Ready to create plan'
+            }
             className="bg-gradient-to-r from-cyber-500 to-emerald-500 hover:from-cyber-600 hover:to-emerald-600 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {isLoading ? 'Creating Plan...' : `🚀 Create Plan (${selectedGoals.length})`}
+            {isLoading ? 'Creating Plan...' : (
+              <>
+                <Rocket className="w-4 h-4 mr-2" />
+                Create Plan ({selectedGoals.length})
+              </>
+            )}
           </Button>
         </div>
       </div>
@@ -846,14 +1127,15 @@ interface AllocatePlanFormProps {
 }
 
 function AllocatePlanForm({ robots, onSubmit, onCancel, isLoading }: AllocatePlanFormProps) {
-  const [selectedAllocator, setSelectedAllocator] = useState<string>('')
+  const [selectedAllocator, setSelectedAllocator] = useState<number | null>(null)
   const [allocatorFilter, setAllocatorFilter] = useState<string>('all')
 
   // Load available allocators dynamically
-  const { data: allocators = [] } = useQuery({
+  const { data: allocators = [], isLoading: allocatorsLoading, error: allocatorsError } = useQuery({
     queryKey: ['allocators'],
     queryFn: () => methodsApi.list().then(methods => methods.filter(m => m.category === 'allocator')),
   })
+
 
   // Allocation options (only real allocators, no manual option)
   const allocationOptions = [...allocators]
@@ -872,10 +1154,38 @@ function AllocatePlanForm({ robots, onSubmit, onCancel, isLoading }: AllocatePla
     onSubmit(selectedAllocator === 'none' ? 'none' : selectedAllocator)
   }
 
+  console.log('AllocatePlanForm: rendering with', allocators.length, 'allocators')
+
+  // If still loading or error, show loading state
+  if (allocatorsLoading) {
+    return (
+      <div className="p-8 text-center text-slate-400">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-slate-400 mx-auto mb-4"></div>
+        Loading allocation methods...
+      </div>
+    )
+  }
+
+  if (allocatorsError) {
+    return (
+      <div className="p-8 text-center text-red-400">
+        Error loading allocation methods: {allocatorsError.message}
+      </div>
+    )
+  }
+
+  console.log('AllocatePlanForm: rendering with', allocators.length, 'allocators')
+
   return (
     <div className="space-y-6 max-h-[75vh] overflow-y-auto">
-      {/* Allocation Methods - Same design as CreatePlanForm */}
-      <div>
+      {allocators.length === 0 ? (
+        <div className="text-center py-8 text-slate-400">
+          No allocation methods available. Please check your configuration.
+        </div>
+      ) : (
+        <>
+          {/* Allocation Methods - Same design as CreatePlanForm */}
+          <div>
         <h3 className="text-lg font-semibold text-white mb-6 flex items-center gap-3">
           <span className="w-3 h-3 bg-gradient-to-r from-emerald-400 to-cyan-400 rounded-full"></span>
           Choose Allocation Method
@@ -992,10 +1302,18 @@ function AllocatePlanForm({ robots, onSubmit, onCancel, isLoading }: AllocatePla
             disabled={isLoading || !selectedAllocator}
             className="bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-600 hover:to-cyan-600 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {isLoading ? 'Allocating Tasks...' : '🚀 Allocate Tasks'}
+            {isLoading ? 'Allocating Tasks...' : (
+              <>
+                <Rocket className="w-4 h-4 mr-2" />
+                Allocate Tasks
+              </>
+            )}
           </Button>
         </div>
       </div>
+      </>
+      )}
+
     </div>
   )
 }

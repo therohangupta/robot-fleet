@@ -682,13 +682,15 @@ class FleetManagerService(fleet_manager_pb2_grpc.FleetManagerServicer):
         If planning_strategy is MANUAL, creates an empty plan shell (no auto-planning).
         If allocation_strategy is NONE, skips robot allocation.
         """
-        logger.info(f"Creating new plan with strategy: {request.planning_strategy} and allocation: {request.allocation_strategy}")
         try:
             # Get the requested planning strategy and allocation strategy
+            # These are already enum objects from protobuf deserialization
             planning_strategy = request.planning_strategy
             allocation_strategy = request.allocation_strategy
             goal_ids = list(request.goal_ids) if request.goal_ids else []
-            
+            name = request.name
+            description = request.description
+
             # MANUAL strategy: create empty plan shell for user-defined tasks
             if planning_strategy == fleet_manager_pb2.PlanningStrategy.MANUAL:
                 logger.info("Creating manual plan shell (no auto-planning)")
@@ -696,7 +698,9 @@ class FleetManagerService(fleet_manager_pb2_grpc.FleetManagerServicer):
                     planning_strategy=planning_strategy,
                     allocation_strategy=allocation_strategy,
                     goal_ids=goal_ids,
-                    task_ids=[]
+                    task_ids=[],
+                    name=name,
+                    description=description
                 )
                 return fleet_manager_pb2.CreatePlanResponse(plan=plan)
             
@@ -716,7 +720,9 @@ class FleetManagerService(fleet_manager_pb2_grpc.FleetManagerServicer):
                     planning_strategy=planning_strategy,
                     allocation_strategy=allocation_strategy,
                     goal_ids=goal_ids,
-                    task_ids=[]
+                    task_ids=[],
+                    name=name,
+                    description=description
                 )
                 return fleet_manager_pb2.CreatePlanResponse(plan=plan)
             
@@ -741,7 +747,7 @@ class FleetManagerService(fleet_manager_pb2_grpc.FleetManagerServicer):
                 if not server_logs:
                     server_logs = [f"Planning completed successfully for goals {goal_ids} using {planning_strategy} strategy"]
 
-                plan_id = await planner.save_plan_to_db(plan_json, planning_strategy, allocation_strategy, goal_ids)
+                plan_id = await planner.save_plan_to_db(plan_json, planning_strategy, allocation_strategy, goal_ids, name=name, description=description)
                 logger.info(f"Successfully created and saved plan {plan_id}")
             except Exception as e:
                 logger.error(f"Error during planning: {str(e)}")
@@ -770,13 +776,17 @@ class FleetManagerService(fleet_manager_pb2_grpc.FleetManagerServicer):
             
             # Get the plan with all tasks
             plan = await self.registry.get_plan(plan_id)
+            print(f"DEBUG: Retrieved plan: {plan}")
 
             logger.info(f"Successfully created plan: {plan_id}")
-            return fleet_manager_pb2.CreatePlanResponse(
-                plan=plan
-            )
+            response = fleet_manager_pb2.CreatePlanResponse(plan=plan)
+            print(f"DEBUG: Created response: {response}")
+            return response
             
         except Exception as e:
+            print(f"DEBUG: Exception in gRPC CreatePlan: {e}")
+            import traceback
+            print(f"DEBUG: Traceback: {traceback.format_exc()}")
             logger.error(f"Error creating plan: {str(e)}")
             context.set_code(grpc.StatusCode.INTERNAL)
             context.set_details(f"Failed to create plan: {str(e)}")

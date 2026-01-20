@@ -39,26 +39,46 @@ async def list_allocators() -> List[dict]:
     return scan_allocator_types()
 
 
-@router.get("/{method_type}")
-async def get_method(method_type: str) -> dict:
+@router.get("/{method_id}")
+async def get_method(method_id: int, category: str = None) -> dict:
     """
     Get the details for a specific method (planner or allocator).
 
     Returns method metadata, prompts, and extracted template variables.
 
     Args:
-        method_type: Method directory name (e.g., 'monolithic', 'lp')
+        method_id: Method ID from summary.yaml (e.g., 1, 2, 3)
     """
-    # First try planners directory
-    method_dir = PLANNER_TYPES_DIR / method_type
+    # Scan all methods to find the one with matching ID
+    all_methods = scan_all_method_types()
+    method_info = None
+
+    for method in all_methods:
+        if method.get("id") == method_id:
+            # If category is specified, ensure it matches
+            if category and method.get("category") != category:
+                continue
+            method_info = method
+            break
+
+    if not method_info:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Method with ID {method_id} not found"
+        )
+
+    method_type = method_info["type"]
+    category = method_info["category"]
+
+    # Find the method directory
+    base_dir = PLANNER_TYPES_DIR if category == "planner" else ALLOCATOR_TYPES_DIR
+    method_dir = base_dir / method_type
+
     if not method_dir.exists():
-        # Try allocators directory
-        method_dir = ALLOCATOR_TYPES_DIR / method_type
-        if not method_dir.exists():
-            raise HTTPException(
-                status_code=404,
-                detail=f"Method type not found: {method_type}"
-            )
+        raise HTTPException(
+            status_code=404,
+            detail=f"Method directory not found: {method_type}"
+        )
 
     summary = load_planner_summary(method_dir)
     if not summary:
@@ -83,8 +103,9 @@ async def get_method(method_type: str) -> dict:
     variables = list(set(re.findall(r'\{(\w+)\}', user_content)))
 
     return {
-        "category": "planner" if method_dir.parent == PLANNER_TYPES_DIR else "allocator",
+        "category": category,
         "type": method_type,
+        "id": method_id,
         "name": summary.get("name", method_type),
         "description": summary.get("description", "").strip(),
         "method_type": summary.get("method_type", "unknown"),

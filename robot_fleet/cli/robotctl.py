@@ -21,7 +21,7 @@ from .printer import (
     ALLOCATION_STRATEGY_CHOICES,
     ALLOCATION_STRATEGY_STRINGS,
 )
-from .client import FleetManagerClient
+from ..client import FleetManagerClient
 import yaml
 import asyncio
 

@@ -52,8 +52,10 @@ export interface Task {
 
 export interface Plan {
   plan_id: number
-  planning_strategy: string
-  allocation_strategy: string
+  name: string
+  description: string
+  planning_strategy: number
+  allocation_strategy: number
   task_ids: number[]
   goal_ids: number[]
   tasks?: Task[]
@@ -109,9 +111,11 @@ export interface GoalCreateRequest {
 }
 
 export interface PlanCreateRequest {
-  planning_strategy: string
-  allocation_strategy: string
+  planning_strategy: number
+  allocation_strategy: number
   goal_ids: number[]
+  name: string
+  description: string
 }
 
 // Manual plan creation
@@ -125,7 +129,8 @@ export interface ManualTaskDefinition {
 }
 
 export interface ManualPlanCreateRequest {
-  name?: string
+  name: string
+  description: string
   tasks: ManualTaskDefinition[]
   goal_ids: number[]
 }

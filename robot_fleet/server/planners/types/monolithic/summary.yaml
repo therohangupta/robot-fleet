@@ -1,6 +1,7 @@
 # Monolithic Planner Configuration
 # =================================
 
+id: 1
 name: Monolithic Planner
 
 description: >

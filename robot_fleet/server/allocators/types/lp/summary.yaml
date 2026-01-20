@@ -1,6 +1,7 @@
 # Linear Programming Allocator Configuration
 # ==========================================
 
+id: 1
 name: Linear Programming Allocator
 
 description: >

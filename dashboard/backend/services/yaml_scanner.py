@@ -173,6 +173,7 @@ def _scan_method_types(base_dir: Path, method_category: str) -> List[Dict[str, A
         methods.append({
             "category": method_category,
             "type": item.name,
+            "id": summary.get("id"),
             "name": summary.get("name", item.name),
             "description": summary.get("description", "").strip(),
             "method_type": summary.get("method_type", "unknown"),

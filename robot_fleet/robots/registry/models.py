@@ -45,6 +45,8 @@ class PlanModel(Base):
     allocation_artifacts = Column(JSON, nullable=True)  # Store artifacts from allocation
     server_logs = Column(Text, nullable=True)  # Store server-side logs
     execution_status = Column(Integer, default=0)  # 0=not_executed, 1=executing, 2=completed, 3=failed
+    name = Column(String, nullable=False)  # User-defined plan name (required)
+    description = Column(Text, nullable=False)  # User-defined plan description (required)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     tasks = relationship("TaskModel", back_populates="plan", cascade="all, delete-orphan")
 
@@ -176,6 +178,8 @@ def plan_model_to_proto(plan_model: 'PlanModel', tasks: Optional[List['TaskModel
     plan_proto.planning_strategy = plan_model.planning_strategy
     plan_proto.allocation_strategy = getattr(plan_model, 'allocation_strategy', 0)
     plan_proto.execution_status = getattr(plan_model, 'execution_status', 0)
+    plan_proto.name = plan_model.name
+    plan_proto.description = plan_model.description
     if plan_model.goal_ids:
         plan_proto.goal_ids.extend(plan_model.goal_ids)
     if tasks:
@@ -194,7 +198,9 @@ def plan_proto_to_model(proto: fleet_manager_pb2.Plan) -> PlanModel:
         # Store the integer value of the enum
         planning_strategy=proto.planning_strategy,
         allocation_strategy=proto.allocation_strategy,
-        execution_status=proto.execution_status if proto.HasField('execution_status') else 0
+        execution_status=proto.execution_status if proto.HasField('execution_status') else 0,
+        name=proto.name,
+        description=proto.description
     )
 
 # --- World Statement Conversion ---

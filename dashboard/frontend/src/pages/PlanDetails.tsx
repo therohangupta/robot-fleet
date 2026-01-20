@@ -1,16 +1,18 @@
-import React, { useState } from 'react'
-import { useQuery } from '@tanstack/react-query'
-import { useParams, useNavigate } from 'react-router-dom'
+import React, { useState, useEffect } from 'react'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom'
+import { useMutation } from '@tanstack/react-query'
 import {
-  ArrowLeft, Wand2, GitBranch, Link, Bot, Target
+  ArrowLeft, Wand2, GitBranch, Link, Bot, Target, Play, Edit, Check, X, Zap, Download, Loader2
 } from 'lucide-react'
 // Graphviz is imported dynamically below
 
 import { Card } from '../components/common/Card'
 import { Button } from '../components/common/Button'
 import { EmptyState } from '../components/common/EmptyState'
-import { plansApi, robotsApi, goalsApi, useRealtimeUpdates } from '../lib/api'
-import { cn, capitalize } from '../lib/utils'
+import { MethodDetailModal } from './Planners'
+import { plansApi, robotsApi, goalsApi, methodsApi, useRealtimeUpdates } from '../lib/api'
+import { cn, capitalize, getPlanningStrategyName, getAllocationStrategyName, getPlanningMethodId, getAllocationMethodId, setMethodData } from '../lib/utils'
 import JSZip from 'jszip'
 
 // =============================================================================
@@ -426,7 +428,10 @@ function DAGVisualization({ tasks }: { tasks: any[] }) {
         <div>🖱️ Drag to pan • Scroll to zoom • ⌨️ R: Reset • +/-: Zoom</div>
         <div>💎 Card-style nodes • 🟣 Purple pills: Robot type • 🟢 Teal pills: Robot ID</div>
         <div>✅ Green: Completed • 🔵 Blue: Running • 🔴 Red: Failed • ⚪ Gray: Pending</div>
-        <div>📦 Download full plan as organized zip with prompts/artifacts/dag folders</div>
+        <div>
+          <Download className="w-4 h-4 mr-2 inline" />
+          Download full plan as organized zip with prompts/artifacts/dag folders
+        </div>
       </div>
     </div>
   )
@@ -441,17 +446,39 @@ export default function PlanDetails() {
 
   const { planId } = useParams<{ planId: string }>()
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  const [selectedMethod, setSelectedMethod] = useState<{ id: number; type: 'planner' | 'allocator' | null } | null>(null)
   const [activeTab, setActiveTab] = useState<'overview' | 'tasks' | 'prompts' | 'artifacts' | 'goals'>('overview')
   const [taskView, setTaskView] = useState<'vertical' | 'dag'>('vertical')
   const [promptsView, setPromptsView] = useState<'planning' | 'allocation'>('planning')
   const [artifactsView, setArtifactsView] = useState<'planning' | 'allocation'>('planning')
+  const [isEditing, setIsEditing] = useState(false)
+  const [editName, setEditName] = useState('')
+  const [editDescription, setEditDescription] = useState('')
+  const [justUpdated, setJustUpdated] = useState(false)
 
   // Enable real-time updates
   const { isConnected } = useRealtimeUpdates()
 
+
+  // Handle URL query parameters for method modal
+  useEffect(() => {
+    const method = searchParams.get('method')
+    const methodType = searchParams.get('method_type') as 'planner' | 'allocator' | null
+    if (method) {
+      const methodId = parseInt(method, 10)
+      if (!isNaN(methodId)) {
+        setSelectedMethod({ id: methodId, type: methodType })
+      }
+    } else {
+      setSelectedMethod(null)
+    }
+  }, [searchParams])
+  const queryClient = useQueryClient()
+
   console.log('PlanDetails: planId =', planId)
 
-  const { data: plan, isLoading, error } = useQuery({
+  const { data: plan, isLoading, error, isFetching } = useQuery({
     queryKey: ['plan', planId],
     queryFn: () => plansApi.get(parseInt(planId!)),
     enabled: !!planId,
@@ -471,6 +498,22 @@ export default function PlanDetails() {
     queryFn: () => robotsApi.list(),
     // No refetchInterval - using WebSocket real-time updates
   })
+
+  // Load method data for strategy name lookups
+  const { data: planners = [] } = useQuery({
+    queryKey: ['planners'],
+    queryFn: () => methodsApi.list().then(methods => methods.filter(m => m.category === 'planner')),
+  })
+
+  const { data: allocators = [] } = useQuery({
+    queryKey: ['allocators'],
+    queryFn: () => methodsApi.list().then(methods => methods.filter(m => m.category === 'allocator')),
+  })
+
+  // Update method data for name lookups
+  useEffect(() => {
+    setMethodData(planners, allocators)
+  }, [planners, allocators])
 
   // Fetch robot health statuses for accurate connectivity checks
   const { data: robotHealth } = useQuery({
@@ -496,6 +539,64 @@ export default function PlanDetails() {
     queryKey: ['goals'],
     queryFn: goalsApi.list,
   })
+
+  // Check if plan is executable (has allocated tasks and robots are available)
+  const isPlanExecutable = plan && allocationStatus && robotHealth && robots ? (() => {
+    if (allocationStatus.status !== 'fully_allocated') return false
+
+    // Get all robots assigned to tasks in this plan
+    const planTasks = plan.tasks || []
+    const assignedTasks = planTasks.filter(t => t.robot_id)
+    const assignedRobotIds = [...new Set(assignedTasks.map(t => t.robot_id).filter(Boolean))]
+
+    // Check if all assigned robots are reachable
+    return assignedRobotIds.every(robotId => {
+      const robot = robots.find(r => r.robot_id === robotId)
+      const health = robotHealth[robotId]
+      return robot && health?.reachable === true
+    })
+  })() : false
+
+  // Execution mutation
+  const startMutation = useMutation({
+    mutationFn: (planId: number) => plansApi.start(planId),
+    onSuccess: () => {
+      // Navigate to execution page
+      navigate(`/execution/${planId}`)
+    },
+  })
+
+  const updateMutation = useMutation({
+    mutationFn: ({ planId, name, description }: { planId: number; name: string; description: string }) =>
+      plansApi.update(planId, { name, description }),
+    onSuccess: (updatedPlan) => {
+      console.log('Update successful, received:', updatedPlan)
+      // Update the query cache with the new plan info
+      queryClient.setQueryData(['plans', planId], updatedPlan)
+      queryClient.setQueryData(['plan', planId], updatedPlan)
+      console.log('Cache updated, invalidating queries...')
+      queryClient.invalidateQueries({ queryKey: ['plans'] })
+      // Force a refetch to ensure the data is fresh
+      queryClient.invalidateQueries({ queryKey: ['plan', planId] })
+
+      // Mark that we just updated
+      setJustUpdated(true)
+    },
+    onError: (error) => {
+      console.error('Failed to update plan:', error)
+      setIsEditing(false)
+      setJustUpdated(false)
+    },
+  })
+
+  // Exit edit mode only after the query has finished refetching with the new data
+  useEffect(() => {
+    if (justUpdated && !isFetching) {
+      console.log('Query finished refetching, exiting edit mode')
+      setIsEditing(false)
+      setJustUpdated(false)
+    }
+  }, [justUpdated, isFetching])
 
   const tabs = [
     { id: 'overview', label: 'Overview', icon: Bot },
@@ -879,7 +980,8 @@ export default function PlanDetails() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-900 p-6">
+    <>
+      <div className="min-h-screen bg-slate-900 p-6">
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
@@ -887,83 +989,228 @@ export default function PlanDetails() {
             <Button
               variant="secondary"
               size="sm"
-              onClick={() => navigate('/plans')}
+              onClick={() => {
+                const fromParam = searchParams.get('from')
+                if (fromParam?.startsWith('robot-')) {
+                  const robotId = fromParam.replace('robot-', '')
+                  navigate(`/robots?robot=${robotId}&tab=allocations`)
+                } else {
+                  navigate('/plans')
+                }
+              }}
               className="flex items-center space-x-2"
             >
               <ArrowLeft className="w-4 h-4" />
-              <span>Back to Plans</span>
+              <span>{searchParams.get('from')?.startsWith('robot-') ? 'Back to Robot' : 'Back to Plans'}</span>
             </Button>
             <h1 className="text-2xl font-bold text-white">Plan Details</h1>
           </div>
+
+          {/* Execute Button */}
+          {plan && (
+            <Button
+              onClick={() => startMutation.mutate(plan.plan_id)}
+              disabled={startMutation.isPending || !isPlanExecutable || plan.execution_status === 'executing' || plan.execution_status === 'completed'}
+              className="flex items-center space-x-2"
+            >
+              <Play className="w-4 h-4" />
+              {startMutation.isPending ? 'Starting...' :
+               plan.execution_status === 'executing' ? 'Executing...' :
+               plan.execution_status === 'completed' ? 'Completed' :
+               !isPlanExecutable ? 'Robots Unavailable' :
+               'Execute Plan'}
+            </Button>
+          )}
         </div>
 
         {/* Plan Info Card */}
         <Card className="p-6">
-          <div className="flex items-center justify-between">
-            <div className="space-y-2">
-              <h2 className="text-xl font-bold text-white">Plan #{plan.plan_id}</h2>
-              {plan.created_at && (
-                <div className="text-slate-400 text-sm">
-                  Created {new Date(plan.created_at).toLocaleString()}
-                </div>
-              )}
-            </div>
-            <div className="flex flex-col items-end space-y-3">
-              <div className="flex items-center space-x-3">
-                {(() => {
-                  // Calculate execution readiness for the header badges
-                  const tasks = plan.tasks || [];
-                  const assignedTasks = tasks.filter(t => t.robot_id);
-                  const assignedRobotIds = [...new Set(assignedTasks.map(t => t.robot_id).filter(Boolean))];
-                  const allocationStatusValue = allocationStatus?.status || 'unknown';
-                  const robotsReady = assignedRobotIds.length > 0 && assignedRobotIds.every((robotId) => {
-                    const robot = robots?.find(r => r.robot_id === robotId);
-                    // @ts-ignore - TypeScript false positive, we check robotHealth exists
-                    const health = robotHealth ? robotHealth[robotId] : undefined;
-                    return robot && health?.reachable === true;
-                  });
-                  const executionReady = allocationStatusValue === 'fully_allocated' && robotsReady;
+          {/* Top Row: P{ID} + Status + Edit Button */}
+          <div className="flex items-start justify-between mb-4">
+            <div className="flex items-center space-x-3">
+              {/* P{Plan_id} Badge */}
+              <span className="px-3 py-1 bg-yellow-500/20 border border-yellow-500/40 text-yellow-300 rounded-lg text-sm font-semibold">
+                P{plan.plan_id}
+              </span>
 
-                  return (
+              {/* Planning Method */}
+              {plan.planning_strategy && (
+                <button
+                  className="px-3 py-1.5 bg-blue-500/20 border border-blue-500/40 text-blue-300 rounded-lg text-sm font-semibold hover:bg-blue-500/30 transition-colors"
+                  onClick={() => {
+                    const methodId = getPlanningMethodId(plan.planning_strategy)
+                    navigate(`/plans/${planId}?method_type=planner&method=${methodId}`)
+                  }}
+                >
+                  {getPlanningStrategyName(plan.planning_strategy)}
+                </button>
+              )}
+
+              {/* Allocation Method */}
+              {allocationStatus?.status && allocationStatus.status !== 'unallocated' && plan.allocation_strategy && plan.allocation_strategy !== 4 && (
+                <button
+                  className="px-3 py-1.5 bg-purple-500/20 border border-purple-500/40 text-purple-300 rounded-lg text-sm font-semibold hover:bg-purple-500/30 transition-colors"
+                  onClick={() => {
+                    const methodId = getAllocationMethodId(plan.allocation_strategy)
+                    navigate(`/plans/${planId}?method_type=allocator&method=${methodId}`)
+                  }}
+                >
+                  {getAllocationStrategyName(plan.allocation_strategy)}
+                </button>
+              )}
+
+              {/* Execution Status */}
+              {(() => {
+                const tasks = plan.tasks || [];
+                const assignedTasks = tasks.filter(t => t.robot_id);
+                const assignedRobotIds = [...new Set(assignedTasks.map(t => t.robot_id).filter(Boolean))];
+                const allocationStatusValue = allocationStatus?.status || 'unknown';
+                const robotsReady = assignedRobotIds.length > 0 && assignedRobotIds.every((robotId) => {
+                  const robot = robots?.find(r => r.robot_id === robotId);
+                  // @ts-ignore - TypeScript false positive, we check robotHealth exists
+                  const health = robotHealth ? robotHealth[robotId] : undefined;
+                  return robot && health?.reachable === true;
+                });
+                const executionReady = allocationStatusValue === 'fully_allocated' && robotsReady;
+
+                return (
+                  <span className={`px-3 py-1.5 border rounded-lg text-sm font-semibold ${
+                    executionReady ? 'bg-green-500/20 border-green-500/40 text-green-300' :
+                    allocationStatusValue === 'fully_allocated' ? 'bg-yellow-500/20 border-yellow-500/40 text-yellow-300' :
+                    'bg-red-500/20 border-red-500/40 text-red-300'
+                  }`}>
+                    {executionReady ? (
+                      <>
+                        <Zap className="w-4 h-4 mr-1 inline" />
+                        Ready to Execute
+                      </>
+                    ) : allocationStatusValue === 'fully_allocated' ? 'Robots Unavailable' : 'Not Ready'}
+                  </span>
+                );
+              })()}
+            </div>
+
+            {/* Edit Button */}
+            {isEditing ? (
+              <div className="flex items-center space-x-2">
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => {
+                    setIsEditing(false)
+                    setEditName('')
+                    setEditDescription('')
+                  }}
+                  className="text-sm"
+                >
+                  <X className="w-4 h-4 mr-1" />
+                  Cancel
+                </Button>
+                <Button
+                  variant="primary"
+                  size="sm"
+                  onClick={() => {
+                    updateMutation.mutate({
+                      planId: plan.plan_id,
+                      name: editName.trim(),
+                      description: editDescription.trim()
+                    })
+                  }}
+                  disabled={!editName.trim() || updateMutation.isPending}
+                  className="text-sm bg-emerald-600 hover:bg-emerald-700 border border-emerald-500"
+                >
+                  {updateMutation.isPending ? (
                     <>
-                      <span className={`px-3 py-1.5 border rounded-lg text-sm font-semibold ${
-                        executionReady ? 'bg-green-500/20 border-green-500/40 text-green-300' :
-                        allocationStatusValue === 'fully_allocated' ? 'bg-yellow-500/20 border-yellow-500/40 text-yellow-300' :
-                        'bg-red-500/20 border-red-500/40 text-red-300'
-                      }`}>
-                        {executionReady ? 'Ready to Execute' :
-                         allocationStatusValue === 'fully_allocated' ? 'Robots Unavailable' : 'Not Ready'}
-                      </span>
-                      {plan.planning_strategy && (
-                        <span className="px-3 py-1.5 bg-blue-500/20 border border-blue-500/40 text-blue-300 rounded-lg text-sm font-semibold">
-                          {plan.planning_strategy}
-                        </span>
-                      )}
-                      {plan.allocation_strategy && (
-                        <span className="px-3 py-1.5 bg-purple-500/20 border border-purple-500/40 text-purple-300 rounded-lg text-sm font-semibold">
-                          {plan.allocation_strategy}
-                        </span>
-                      )}
+                      <Loader2 className="w-4 h-4 mr-1 animate-spin" />
+                      Saving...
                     </>
-                  );
-                })()}
+                  ) : (
+                    <>
+                      <Check className="w-4 h-4 mr-1" />
+                      Save
+                    </>
+                  )}
+                </Button>
               </div>
+            ) : (
               <Button
-                variant="primary"
+                variant="secondary"
                 size="sm"
                 onClick={() => {
-                  console.log('Download Full Plan button clicked')
-                  if (typeof downloadFullPlan === 'function') {
-                    downloadFullPlan()
-                  } else {
-                    console.error('downloadFullPlan function not found')
-                  }
+                  setIsEditing(true)
+                  setEditName(plan.name || '')
+                  setEditDescription(plan.description || '')
                 }}
-                className="text-sm bg-emerald-600 hover:bg-emerald-700 border border-emerald-500 shadow-md font-semibold"
+                className="text-sm"
               >
-                📦 Download Full Plan (ZIP)
+                <Edit className="w-4 h-4 mr-1" />
+                Edit
               </Button>
+            )}
+          </div>
+
+          {/* Plan Name and Description */}
+          {isEditing ? (
+            <div className="space-y-3">
+              <div>
+                <label className="block text-sm font-medium text-slate-300 mb-1">
+                  Plan Name
+                </label>
+                <input
+                  type="text"
+                  value={editName}
+                  onChange={(e) => setEditName(e.target.value)}
+                  className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                  placeholder="Enter plan name"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-300 mb-1">
+                  Description
+                </label>
+                <textarea
+                  value={editDescription}
+                  onChange={(e) => setEditDescription(e.target.value)}
+                  rows={2}
+                  className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 resize-none"
+                  placeholder="Enter plan description"
+                />
+              </div>
             </div>
+          ) : (
+            <div className="space-y-3">
+              <h2 className="text-xl font-bold text-white">
+                {plan.name}
+              </h2>
+              <div className="text-slate-300 text-base leading-relaxed">
+                {plan.description}
+              </div>
+            </div>
+          )}
+
+          {/* Bottom Row: Created date + Download Button */}
+          <div className="flex items-center justify-between mt-4">
+            {plan.created_at && (
+              <div className="text-slate-500 text-xs">
+                Created on: {new Date(plan.created_at).toLocaleString()}
+              </div>
+            )}
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={() => {
+                console.log('Download Full Plan button clicked')
+                if (typeof downloadFullPlan === 'function') {
+                  downloadFullPlan()
+                } else {
+                  console.error('downloadFullPlan function not found')
+                }
+              }}
+              className="text-sm bg-emerald-600 hover:bg-emerald-700 border border-emerald-500 shadow-md font-semibold"
+            >
+                <Download className="w-4 h-4 mr-2" />
+                Download Full Plan (ZIP)
+            </Button>
           </div>
         </Card>
 
@@ -1831,5 +2078,17 @@ export default function PlanDetails() {
         </div>
       </div>
     </div>
+
+      {/* Method Detail Modal */}
+      <MethodDetailModal
+        methodId={selectedMethod?.id || null}
+        methodType={selectedMethod?.type || undefined}
+        isOpen={!!selectedMethod}
+        onClose={() => {
+          setSelectedMethod(null)
+          navigate(`/plans/${planId}`, { replace: true })
+        }}
+      />
+    </>
   )
 }

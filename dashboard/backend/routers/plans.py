@@ -6,9 +6,9 @@ execution, and status queries.
 """
 
 import logging
-from typing import List
+from typing import List, Optional
 from fastapi import APIRouter, HTTPException, Depends
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from ..dependencies import get_bridge, GRPCBridge
 from ..models.requests import PlanCreate, ManualPlanCreate
@@ -26,6 +26,18 @@ router = APIRouter(prefix="/plans")
 class AllocatePlanRequest(BaseModel):
     """Request body for plan allocation."""
     allocation_strategy: str  # lp, llm, cost_based
+
+
+class PlanCopyRequest(BaseModel):
+    """Request body for copying a plan with required name/description updates."""
+    name: str = Field(..., description="New name for the copied plan")
+    description: str = Field(..., description="New description for the copied plan")
+
+
+class PlanUpdateRequest(BaseModel):
+    """Request body for updating plan name and description."""
+    name: str = Field(..., description="Updated name for the plan")
+    description: str = Field(..., description="Updated description for the plan")
 
 
 # =============================================================================
@@ -57,19 +69,31 @@ async def create_plan(
 ):
     """
     Create a new plan using automated planning and allocation.
-    
+
     Uses the specified planning strategy (monolithic, dag, big_dag)
     and allocation strategy (lp, llm, cost_based, none) to generate
     a task DAG for the given goals.
     """
-    result = bridge.create_plan(
-        planning_strategy=plan.planning_strategy,
-        allocation_strategy=plan.allocation_strategy,
-        goal_ids=plan.goal_ids
-    )
-    if not result:
-        raise HTTPException(status_code=400, detail="Failed to create plan")
-    return result
+    print(f"DEBUG: Creating plan with data: {plan.dict()}")
+    try:
+        result = bridge.create_plan(
+            planning_strategy=plan.planning_strategy,
+            allocation_strategy=plan.allocation_strategy,
+            goal_ids=plan.goal_ids,
+            name=plan.name,
+            description=plan.description
+        )
+        print(f"DEBUG: Bridge result: {result}")
+        if not result:
+            print("DEBUG: Bridge returned None")
+            raise HTTPException(status_code=400, detail="Failed to create plan")
+        print(f"DEBUG: Returning plan: {result}")
+        return result
+    except Exception as e:
+        print(f"DEBUG: Exception in create_plan: {e}")
+        import traceback
+        print(f"DEBUG: Traceback: {traceback.format_exc()}")
+        raise
 
 
 @router.delete("/{plan_id}")
@@ -138,7 +162,7 @@ async def create_manual_plan(
     derived_goal_ids = list(set(t.goal_id for t in plan_data.tasks if t.goal_id))
     
     # Create the plan shell (manual strategy)
-    result = bridge.create_manual_plan(goal_ids=derived_goal_ids)
+    result = bridge.create_manual_plan(goal_ids=derived_goal_ids, name=plan_data.name, description=plan_data.description)
     if not result:
         raise HTTPException(status_code=400, detail="Failed to create plan")
     
@@ -294,6 +318,7 @@ async def start_plan(
 @router.post("/{plan_id}/copy")
 async def copy_plan(
     plan_id: int,
+    request: PlanCopyRequest,
     bridge: GRPCBridge = Depends(get_bridge)
 ):
     """
@@ -306,49 +331,100 @@ async def copy_plan(
         if not original_plan:
             raise HTTPException(status_code=404, detail=f"Plan {plan_id} not found")
 
-        # Create the new plan with the same parameters as the original
-        result = bridge.create_plan(
-            planning_strategy=original_plan.get("planning_strategy", "big_dag"),
-            allocation_strategy=original_plan.get("allocation_strategy", "llm"),
-            goal_ids=original_plan.get("goal_ids", [])
-        )
-        if result.get("error"):
-            raise HTTPException(status_code=400, detail=result.get("error"))
+        # Validate that we have all required plan configuration
+        planning_strategy = original_plan.get("planning_strategy")
+        allocation_strategy = original_plan.get("allocation_strategy")
+        goal_ids = original_plan.get("goal_ids", [])
 
-        new_plan = result.get("plan")
-        if not new_plan:
-            raise HTTPException(status_code=500, detail="Failed to create plan copy")
+        if not planning_strategy:
+            raise HTTPException(status_code=400, detail=f"Original plan {plan_id} missing planning_strategy")
+        if not allocation_strategy:
+            raise HTTPException(status_code=400, detail=f"Original plan {plan_id} missing allocation_strategy")
 
-        new_plan_id = new_plan.get("plan_id")
-        if not new_plan_id:
-            raise HTTPException(status_code=500, detail="New plan missing plan_id")
+        # Use the provided name and description
+        copy_name = request.name
+        copy_description = request.description
 
-        # Copy allocation artifacts from original plan to new plan
-        # This preserves the allocation results without re-running allocation
-        if original_plan.get("allocation_artifacts"):
-            try:
-                # Update the new plan with copied allocation artifacts and reset execution status
-                update_result = await bridge.registry.update_plan(
-                    plan_id=new_plan_id,
-                    allocation_artifacts=original_plan["allocation_artifacts"],
-                    planning_artifacts=original_plan.get("planning_artifacts"),
-                    allocation_prompts=original_plan.get("allocation_prompts"),
-                    planning_prompts=original_plan.get("planning_prompts"),
-                    server_logs=original_plan.get("server_logs", []),
-                    execution_status=0  # Reset to not_executed
-                )
+        # Create the new plan directly in the database (bypass planner)
+        try:
+            new_plan_proto = await bridge.registry.create_plan(
+                planning_strategy=planning_strategy,
+                allocation_strategy=allocation_strategy,
+                goal_ids=goal_ids,
+                task_ids=[],  # We'll add tasks separately
+                planning_prompts=original_plan.get("planning_prompts"),
+                allocation_prompts=original_plan.get("allocation_prompts"),
+                planning_artifacts=original_plan.get("planning_artifacts"),
+                allocation_artifacts=original_plan.get("allocation_artifacts"),
+                server_logs=original_plan.get("server_logs") or None,
+                name=copy_name,
+                description=copy_description
+            )
 
-                if not update_result:
-                    logger.warning(f"Failed to update copied plan {new_plan_id} with artifacts")
+            if not new_plan_proto:
+                raise HTTPException(status_code=500, detail="Failed to create plan copy")
 
-            except Exception as e:
-                logger.error(f"Failed to copy artifacts to new plan {new_plan_id}: {e}")
-                # Continue anyway - the plan was created successfully
+            new_plan_id = new_plan_proto.plan_id
 
-        return new_plan
+            # Copy all tasks from the original plan to the new plan
+            if original_plan.get("tasks"):
+                await bridge.registry.copy_plan_tasks(original_plan["plan_id"], new_plan_id)
+
+            # Reset execution status to not_executed
+            await bridge.registry.update_plan(
+                plan_id=new_plan_id,
+                execution_status=0
+            )
+
+            # Get the final plan with copied tasks
+            copied_plan = await bridge.get_plan(new_plan_id)
+            return copied_plan
+
+        except Exception as e:
+            logger.error(f"Failed to copy plan {plan_id}: {e}")
+            raise HTTPException(status_code=500, detail=f"Failed to copy plan: {str(e)}")
 
     except HTTPException:
         raise
     except Exception as e:
         logger.error(f"Failed to copy plan {plan_id}: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to copy plan: {str(e)}")
+
+
+@router.put("/{plan_id}")
+async def update_plan(
+    plan_id: int,
+    request: PlanUpdateRequest,
+    bridge: GRPCBridge = Depends(get_bridge)
+):
+    """
+    Update a plan's name and description.
+
+    Only name and description can be updated. Other plan properties
+    (strategies, tasks, etc.) remain unchanged.
+    """
+    try:
+        # Get the current plan to ensure it exists
+        current_plan = await bridge.get_plan(plan_id)
+        if not current_plan:
+            raise HTTPException(status_code=404, detail=f"Plan {plan_id} not found")
+
+        # Update the plan name and description
+        updated_plan_proto = await bridge.registry.update_plan(
+            plan_id=plan_id,
+            name=request.name,
+            description=request.description
+        )
+
+        if not updated_plan_proto:
+            raise HTTPException(status_code=500, detail="Failed to update plan")
+
+        # Get the updated plan data
+        updated_plan = await bridge.get_plan(plan_id)
+        return updated_plan
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to update plan {plan_id}: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to update plan: {str(e)}")

@@ -300,5 +300,116 @@ async def refresh_all_robots_from_yaml(
     }
 
 
+# =============================================================================
+# Robot Allocations
+# =============================================================================
+
+@router.get("/{robot_id}/allocations")
+async def get_robot_allocations(
+    robot_id: str,
+    bridge: GRPCBridge = Depends(get_bridge)
+):
+    """
+    Get allocation details for a specific robot.
+
+    Returns counts of plans, goals, and tasks allocated to this robot.
+    """
+    try:
+        # Query tasks allocated to this robot
+        from robot_fleet.robots.registry.models import TaskModel, PlanModel, GoalModel
+        from sqlalchemy import select, func, distinct
+
+        async with bridge.registry.async_session_factory() as session:
+            # Get all tasks allocated to this robot
+            task_query = select(
+                TaskModel.task_id,
+                TaskModel.plan_id,
+                TaskModel.goal_id,
+                PlanModel.execution_status.label('plan_status')
+            ).join(
+                PlanModel, TaskModel.plan_id == PlanModel.plan_id
+            ).where(
+                TaskModel.robot_id == robot_id,
+                TaskModel.robot_id.isnot(None)  # Only allocated tasks
+            )
+
+            result = await session.execute(task_query)
+            tasks_data = result.fetchall()
+
+            if not tasks_data:
+                return {
+                    "robot_id": robot_id,
+                    "plans_count": 0,
+                    "goals_count": 0,
+                    "tasks_count": 0,
+                    "plans": [],
+                    "goals": []
+                }
+
+            # Extract unique plan IDs from tasks
+            plan_ids = set()
+            plan_statuses = {}
+
+            for task in tasks_data:
+                if task.plan_id:
+                    plan_ids.add(task.plan_id)
+                    plan_statuses[task.plan_id] = task.plan_status
+
+            # Get plan details for the summary and collect goal IDs
+            plans_summary = []
+            goal_ids = set()
+
+            if plan_ids:
+                plan_details_query = select(
+                    PlanModel.plan_id,
+                    PlanModel.goal_ids,
+                    PlanModel.execution_status,
+                    PlanModel.name,
+                    PlanModel.description
+                ).where(PlanModel.plan_id.in_(plan_ids))
+
+                plan_result = await session.execute(plan_details_query)
+                plans_data = plan_result.fetchall()
+
+                for plan in plans_data:
+                    # Count tasks for this robot in this plan
+                    robot_tasks_in_plan = sum(1 for task in tasks_data if task.plan_id == plan.plan_id)
+                    plans_summary.append({
+                        "plan_id": plan.plan_id,
+                        "goal_ids": plan.goal_ids or [],
+                        "task_count": robot_tasks_in_plan,
+                        "status": ["not_executed", "executing", "completed", "failed"][plan.execution_status or 0],
+                        "name": plan.name,
+                        "description": plan.description
+                    })
+
+                    # Collect goal IDs from this plan
+                    if plan.goal_ids:
+                        goal_ids.update(plan.goal_ids)
+
+            return {
+                "robot_id": robot_id,
+                "plans_count": len(plan_ids),
+                "goals_count": len(goal_ids),
+                "tasks_count": len(tasks_data),
+                "plans": plans_summary,
+                "goals": list(goal_ids)
+            }
+
+    except Exception as e:
+        logger.error(f"Error getting allocations for robot {robot_id}: {e}")
+        import traceback
+        traceback.print_exc()
+        # Return empty data on error
+        return {
+            "robot_id": robot_id,
+            "plans_count": 0,
+            "goals_count": 0,
+            "tasks_count": 0,
+            "plans": [],
+            "goals": []
+        }
+
+
 # Import Path for relative path handling
 from pathlib import Path

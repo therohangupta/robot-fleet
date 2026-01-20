@@ -1,5 +1,6 @@
 import logging
 from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import Optional, Dict, Any
 import uvicorn
@@ -19,6 +20,15 @@ logging.basicConfig(level=logging.INFO)
 
 app = FastAPI()
 
+# Add CORS middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Allow all origins
+    allow_credentials=True,
+    allow_methods=["*"],  # Allow all methods
+    allow_headers=["*"],  # Allow all headers
+)
+
 class FakeRobotServer(RobotServerBase):
     def __init__(self, robot_id: str, port: int):
         super().__init__(robot_id, port)
@@ -26,13 +36,19 @@ class FakeRobotServer(RobotServerBase):
 
     async def _execute_task(self, task_request: TaskRequest) -> TaskResult:
         logger.info(f"Received task: {task_request.task_description}")
-        actual_task_description = task_request.task_description.split("DO THE FOLLOWING TASK:")[1].strip()
-        await asyncio.sleep(5)
+
+        # Handle both executor format ("DO THE FOLLOWING TASK: ...") and direct input
+        if "DO THE FOLLOWING TASK:" in task_request.task_description:
+            actual_task_description = task_request.task_description.split("DO THE FOLLOWING TASK:")[1].strip()
+        else:
+            actual_task_description = task_request.task_description.strip()
+
+        await asyncio.sleep(2)  # Reduced sleep for faster testing
         return TaskResult(
             success=True,
             message=f"""Succeeded task!
             Task Given by Planner: '{actual_task_description}'
-            Task Result Status by Robot: f'Completed: {actual_task_description}'""",
+            Task Result Status by Robot: 'Completed: {actual_task_description}'""",
             replan=False
         )
 

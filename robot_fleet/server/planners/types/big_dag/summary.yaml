@@ -1,6 +1,7 @@
 # Big DAG Planner Configuration
 # ==============================
 
+id: 3
 name: Big DAG Planner
 
 description: >

@@ -84,11 +84,13 @@ class TaskResponse(BaseModel):
 class PlanResponse(BaseModel):
     """Plan information returned by the API."""
     plan_id: int = Field(..., description="Unique plan identifier")
+    name: str = Field(..., description="User-defined plan name")
+    description: str = Field(..., description="User-defined plan description")
     goal_ids: List[int] = Field(default_factory=list, description="Goals this plan addresses")
     task_ids: List[int] = Field(default_factory=list, description="Tasks in this plan")
     tasks: List[TaskResponse] = Field(default_factory=list, description="Full task objects")
-    planning_strategy: str = Field(..., description="Strategy used for planning")
-    allocation_strategy: str = Field(..., description="Strategy used for allocation")
+    planning_strategy: int = Field(..., description="Strategy used for planning (enum value)")
+    allocation_strategy: int = Field(..., description="Strategy used for allocation (enum value)")
     allocation_status: str = Field(
         default="unknown",
         description="'unallocated', 'partially_allocated', or 'fully_allocated'"
