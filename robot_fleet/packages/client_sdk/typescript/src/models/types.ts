@@ -100,6 +100,7 @@ export interface Embodiment {
 
 export interface Strategy {
   value: string
+  id: number
   label: string
   description: string
 }
@@ -137,6 +138,10 @@ export interface RobotInstanceCreateRequest {
   robot_id: string
   host: string
   port: number
+}
+
+export interface WorldStatementCreateRequest {
+  statement: string
 }
 
 export interface GoalCreateRequest {

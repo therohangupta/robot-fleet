@@ -20,9 +20,8 @@ PROMPT_DIR = Path(__file__).parent
 class DAGPlanner(BasePlanner):
     """Planner that uses a DAG-based approach to generate plans"""
     
-    def __init__(self, registry):
-        super().__init__(registry)
-        # Initialize OpenAI client at instance creation time
+    def __init__(self, registry=None):
+        super().__init__(registry=registry)
         self.client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
     
     def _load_prompt(self, prompt_type: str) -> str:

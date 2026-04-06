@@ -207,3 +207,27 @@ def scan_all_method_types() -> List[Dict[str, Any]]:
     methods.extend(scan_planner_types())
     methods.extend(scan_allocator_types())
     return methods
+
+
+def _build_strategy_lookup(base_dir: Path) -> Dict[str, int]:
+    """Build a directory-name → summary.yaml id mapping for a method types dir."""
+    lookup = {}
+    if not base_dir.exists():
+        return lookup
+    for item in base_dir.iterdir():
+        if not item.is_dir() or item.name.startswith('__'):
+            continue
+        summary = load_planner_summary(item)
+        if summary and "id" in summary:
+            lookup[item.name] = summary["id"]
+    return lookup
+
+
+def get_allocation_strategy_id(name: str) -> Optional[int]:
+    """Resolve an allocation strategy directory name (e.g. 'llm') to its summary.yaml id."""
+    return _build_strategy_lookup(ALLOCATOR_TYPES_DIR).get(name)
+
+
+def get_planning_strategy_id(name: str) -> Optional[int]:
+    """Resolve a planning strategy directory name (e.g. 'big_dag') to its summary.yaml id."""
+    return _build_strategy_lookup(PLANNER_TYPES_DIR).get(name)

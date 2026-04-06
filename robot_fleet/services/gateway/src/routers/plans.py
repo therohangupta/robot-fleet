@@ -13,6 +13,7 @@ from pydantic import BaseModel, Field
 from ..dependencies import get_bridge, GRPCBridge
 from ..models.requests import PlanCreate, ManualPlanCreate
 from ..models.responses import PlanResponse
+from ..services.yaml_scanner import get_allocation_strategy_id, scan_allocator_types
 
 logger = logging.getLogger(__name__)
 
@@ -271,17 +272,17 @@ async def allocate_plan(
     """
     Allocate robots to tasks in an existing plan.
     
-    Use this to run allocation on an unallocated or partially allocated plan.
-    Available strategies: lp, llm, cost_based
+    Strategy names are resolved from each allocator's summary.yaml (single source of truth).
     """
-    valid_strategies = ["lp", "llm", "cost_based"]
-    if request.allocation_strategy not in valid_strategies:
+    strategy_int = get_allocation_strategy_id(request.allocation_strategy)
+    if strategy_int is None:
+        available = [m["type"] for m in scan_allocator_types()]
         raise HTTPException(
             status_code=400, 
-            detail=f"Invalid allocation strategy. Must be one of: {valid_strategies}"
+            detail=f"Invalid allocation strategy '{request.allocation_strategy}'. Must be one of: {available}"
         )
     
-    result = bridge.allocate_plan(plan_id, request.allocation_strategy)
+    result = bridge.allocate_plan(plan_id, strategy_int)
     if not result.get("success"):
         raise HTTPException(
             status_code=400, 

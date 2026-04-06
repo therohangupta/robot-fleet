@@ -257,14 +257,14 @@ def get_planner(strategy: int, db_url: str = None, registry: Optional[RobotInsta
         directly in service.py without using a planner.
     """
     if strategy == PlanningStrategy.MONOLITHIC:
-        return MonolithicPlanner(db_url, registry=registry)
+        return MonolithicPlanner(registry)
     elif strategy == PlanningStrategy.DAG:
-        return DAGPlanner(db_url, registry=registry)
+        return DAGPlanner(registry)
     elif strategy == PlanningStrategy.BIG_DAG:
-        return BigDAGPlanner(db_url, registry=registry)
-    elif strategy == PlanningStrategy.MANUAL:
+        return BigDAGPlanner(registry)
+    elif strategy == PlanningStrategy.MANUAL_PLAN:
         raise ValueError(
-            "MANUAL strategy does not use a planner. "
+            "MANUAL_PLAN strategy does not use a planner. "
             "Create an empty plan shell directly via registry.create_plan() instead."
         )
     else:

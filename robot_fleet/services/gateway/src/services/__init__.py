@@ -14,6 +14,8 @@ from .yaml_scanner import (
     scan_all_method_types,
     load_planner_summary,
     find_yaml_for_robot,
+    get_allocation_strategy_id,
+    get_planning_strategy_id,
 )
 from .port_manager import get_used_ports, suggest_next_port, is_localhost
 from .telemetry_client import (
@@ -33,8 +35,12 @@ __all__ = [
     # YAML scanning
     "scan_embodiments",
     "scan_planner_types",
+    "scan_allocator_types",
+    "scan_all_method_types",
     "load_planner_summary",
     "find_yaml_for_robot",
+    "get_allocation_strategy_id",
+    "get_planning_strategy_id",
     # Port management
     "get_used_ports",
     "suggest_next_port",

@@ -2,10 +2,13 @@
 Strategy options endpoint.
 
 Returns the available planning and allocation strategies
-that can be used when creating plans.
+dynamically from each method's summary.yaml (single source of truth).
 """
 
 from fastapi import APIRouter
+from packages.proto import fleet_manager_pb2
+
+from ..services.yaml_scanner import scan_planner_types, scan_allocator_types
 
 router = APIRouter(prefix="/strategies")
 
@@ -14,48 +17,39 @@ router = APIRouter(prefix="/strategies")
 async def get_strategies():
     """
     Get available planning and allocation strategies.
-    
-    Returns descriptions of each strategy to help users
-    choose the appropriate one for their use case.
+
+    Built dynamically from each planner/allocator's summary.yaml so there
+    is exactly one place where strategy metadata lives.
     """
-    return {
-        "planning": [
-            {
-                "value": "monolithic",
-                "label": "Monolithic",
-                "description": "LLM generates a single sequential task list for all goals"
-            },
-            {
-                "value": "dag",
-                "label": "DAG",
-                "description": "LLM generates parallel task DAGs per goal"
-            },
-            {
-                "value": "big_dag",
-                "label": "Big DAG",
-                "description": "LLM generates one comprehensive DAG spanning all goals"
-            },
-        ],
-        "allocation": [
-            {
-                "value": "lp",
-                "label": "Linear Programming",
-                "description": "Mathematical optimization for balanced load distribution"
-            },
-            {
-                "value": "llm",
-                "label": "LLM (GPT-4)",
-                "description": "AI-powered allocation considering context and robot state"
-            },
-            {
-                "value": "cost_based",
-                "label": "Cost-Based",
-                "description": "Iterative assignment minimizing task switching costs"
-            },
-            {
-                "value": "none",
-                "label": "None (Unallocated)",
-                "description": "Skip allocation — assign robots later"
-            },
-        ]
-    }
+    planners = scan_planner_types()
+    allocators = scan_allocator_types()
+
+    planning = [
+        {
+            "value": p["type"],
+            "id": p["id"],
+            "label": p["name"],
+            "description": p["description"],
+        }
+        for p in sorted(planners, key=lambda x: x.get("id", 0))
+        if p["type"] != "replanner"
+    ]
+
+    allocation = [
+        {
+            "value": a["type"],
+            "id": a["id"],
+            "label": a["name"],
+            "description": a["description"],
+        }
+        for a in sorted(allocators, key=lambda x: x.get("id", 0))
+    ]
+
+    allocation.append({
+        "value": "none",
+        "id": int(fleet_manager_pb2.AllocationStrategy.NONE),
+        "label": "None (Unallocated)",
+        "description": "Skip allocation — assign robots later",
+    })
+
+    return {"planning": planning, "allocation": allocation}

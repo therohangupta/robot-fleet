@@ -1164,7 +1164,7 @@ interface AllocatePlanFormProps {
 }
 
 function AllocatePlanForm({ robots, onSubmit, onCancel, isLoading }: AllocatePlanFormProps) {
-  const [selectedAllocator, setSelectedAllocator] = useState<number | null>(null)
+  const [selectedAllocator, setSelectedAllocator] = useState<string | null>(null)
   const [allocatorFilter, setAllocatorFilter] = useState<string>('all')
 
   // Load available allocators dynamically
@@ -1188,10 +1188,8 @@ function AllocatePlanForm({ robots, onSubmit, onCancel, isLoading }: AllocatePla
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     if (!selectedAllocator) return
-    onSubmit(selectedAllocator === 'none' ? 'none' : selectedAllocator)
+    onSubmit(selectedAllocator)
   }
-
-  console.log('AllocatePlanForm: rendering with', allocators.length, 'allocators')
 
   // If still loading or error, show loading state
   if (allocatorsLoading) {
@@ -1210,8 +1208,6 @@ function AllocatePlanForm({ robots, onSubmit, onCancel, isLoading }: AllocatePla
       </div>
     )
   }
-
-  console.log('AllocatePlanForm: rendering with', allocators.length, 'allocators')
 
   return (
     <div className="space-y-6 max-h-[75vh] overflow-y-auto">

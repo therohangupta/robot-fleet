@@ -23,8 +23,8 @@ class BigDAGPlanner(BasePlanner):
     This allows for coordinated planning across multiple goals.
     """
     
-    def __init__(self, registry):
-        super().__init__(registry)
+    def __init__(self, registry=None):
+        super().__init__(registry=registry)
         self.client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
     
     def _load_prompt(self, prompt_type: str) -> str:

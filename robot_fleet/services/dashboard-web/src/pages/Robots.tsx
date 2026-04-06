@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Bot, Plus, Trash2, Wifi, WifiOff, RefreshCw, CheckCircle, XCircle, Loader2, FileCode, Download, Settings, Cpu, Network, FileX, Target, Wrench, Info, Send, Pencil, Eye, RotateCcw } from 'lucide-react'
+import { Bot, Plus, Trash2, Wifi, WifiOff, RefreshCw, CheckCircle, XCircle, Loader2, FileCode, Download, Settings, Cpu, Network, FileX, Target, Wrench, Info, Send, RotateCcw, Video, Activity, Terminal } from 'lucide-react'
 import { Card } from '../components/common/Card'
 import { Button } from '../components/common/Button'
 import { Modal } from '../components/common/Modal'
@@ -869,7 +869,7 @@ function SendTaskTab({ robot, health }: { robot: Robot, health?: RobotHealth }) 
       const host = robot.task_server_info.host === 'host.docker.internal' ? 'localhost' : robot.task_server_info.host
       const robotUrl = `http://${host}:${robot.task_server_info.port}/do_task`
 
-      const response = await fetch(robotUrl, {
+      const res = await fetch(robotUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -879,11 +879,11 @@ function SendTaskTab({ robot, health }: { robot: Robot, health?: RobotHealth }) 
         }),
       })
 
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+      if (!res.ok) {
+        throw new Error(`HTTP ${res.status}: ${res.statusText}`)
       }
 
-      const result = await response.json()
+      const result = await res.json()
 
       setResponse({
         success: result.success,
@@ -902,15 +902,11 @@ function SendTaskTab({ robot, health }: { robot: Robot, health?: RobotHealth }) 
   const isReachable = health?.reachable === true
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center gap-2">
-        <Send className="w-5 h-5 text-[var(--color-text-secondary)]" />
-        <h4 className="text-lg font-semibold text-white">Send Task</h4>
-      </div>
-
-      {/* Connection Status */}
-      <Card className="p-4">
-        <div className="flex items-center gap-2">
+    <div className="grid grid-cols-1 lg:grid-cols-[1fr_0.8fr] gap-6">
+      {/* Left column: task form + response */}
+      <div className="space-y-4">
+        {/* Connection Status */}
+        <div className="flex items-center gap-2 px-1">
           {isReachable ? (
             <CheckCircle className="w-4 h-4 text-emerald-400" />
           ) : (
@@ -922,168 +918,158 @@ function SendTaskTab({ robot, health }: { robot: Robot, health?: RobotHealth }) 
           )}>
             {isReachable ? 'Connected' : 'Disconnected'}
           </span>
+          <span className="text-xs text-[var(--color-text-muted)] font-mono ml-auto">
+            {robot.task_server_info?.host}:{robot.task_server_info?.port}
+          </span>
         </div>
-        <div className="text-xs text-[var(--color-text-muted)] mt-2 font-mono">
-          {robot.task_server_info?.host}:{robot.task_server_info?.port}
+
+        {/* Task Input */}
+        <div>
+          <textarea
+            value={taskDescription}
+            onChange={(e) => setTaskDescription(e.target.value)}
+            placeholder="Enter a natural language task description (e.g., 'navigate to the kitchen and pick up the red cup')"
+            className="w-full h-28 px-3 py-2 bg-surface-overlay border border-border rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-cyber-500 resize-none text-sm"
+            disabled={!isReachable || isSending}
+          />
+
+          {error && (
+            <div className="mt-2 p-2.5 bg-red-500/10 border border-red-500/20 rounded-lg">
+              <p className="text-sm text-red-400">{error}</p>
+            </div>
+          )}
+
+          <div className="flex justify-end mt-3">
+            <Button
+              onClick={handleSendTask}
+              disabled={!isReachable || isSending || !taskDescription.trim()}
+              className="flex items-center gap-2"
+            >
+              {isSending ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <Send className="w-4 h-4" />
+              )}
+              {isSending ? 'Executing...' : 'Send Task'}
+            </Button>
+          </div>
         </div>
-      </Card>
 
-      {/* Task Input */}
-      <Card className="p-4">
-        <h5 className="font-medium text-white mb-3">Task Description</h5>
-        <textarea
-          value={taskDescription}
-          onChange={(e) => setTaskDescription(e.target.value)}
-          placeholder="Enter a natural language task description (e.g., 'navigate to the kitchen and pick up the red cup')"
-          className="w-full h-32 px-3 py-2 bg-surface-overlay border border-border rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-cyber-500 resize-none"
-          disabled={!isReachable || isSending}
-        />
-
-        {error && (
-          <div className="mt-3 p-3 bg-red-500/10 border border-red-500/20 rounded-lg">
-            <p className="text-sm text-red-400">{error}</p>
+        {/* Execution Status */}
+        {isSending && (
+          <div className="p-4 rounded-lg border-2 border-amber-500/40 bg-amber-500/5">
+            <div className="flex items-center gap-2 mb-2">
+              <Loader2 className="w-4 h-4 text-amber-400 animate-spin" />
+              <span className="text-sm font-medium text-amber-300">Executing Task</span>
+            </div>
+            <p className="text-sm text-[var(--color-text-secondary)] leading-relaxed">{taskDescription}</p>
           </div>
         )}
 
-        <div className="flex justify-end mt-4">
-          <Button
-            onClick={handleSendTask}
-            disabled={!isReachable || isSending || !taskDescription.trim()}
-            className="flex items-center gap-2"
-          >
-            {isSending ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : (
-              <Send className="w-4 h-4" />
-            )}
-            {isSending ? 'Sending...' : 'Send Task'}
-          </Button>
-        </div>
-      </Card>
-
-      {/* Response Display */}
-      {response && (
-        <Card className="p-4">
-          <div className="flex items-center gap-2 mb-3">
-            {response.success ? (
-              <CheckCircle className="w-5 h-5 text-emerald-400" />
-            ) : (
-              <XCircle className="w-5 h-5 text-red-400" />
-            )}
-            <h5 className="font-medium text-white">Task Response</h5>
-            <span className="text-xs text-[var(--color-text-muted)] ml-auto">
-              {response.timestamp.toLocaleTimeString()}
-            </span>
-          </div>
-
+        {/* Response Display */}
+        {response && (
           <div className={cn(
-            'p-3 rounded-lg border text-sm',
+            'p-4 rounded-lg border',
             response.success
-              ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-300'
-              : 'bg-red-500/10 border-red-500/20 text-red-300'
+              ? 'border-emerald-500/30 bg-emerald-500/5'
+              : 'border-red-500/30 bg-red-500/5'
           )}>
-            <pre className="whitespace-pre-wrap font-mono text-xs leading-relaxed">
-              {response.message}
-            </pre>
-          </div>
-
-          {response.replan !== undefined && (
-            <div className="mt-3 flex items-center gap-2">
-              <span className="text-xs text-[var(--color-text-muted)]">Replan Required:</span>
+            <div className="flex items-center gap-2 mb-2">
+              {response.success ? (
+                <CheckCircle className="w-4 h-4 text-emerald-400" />
+              ) : (
+                <XCircle className="w-4 h-4 text-red-400" />
+              )}
               <span className={cn(
-                'text-xs font-medium px-2 py-1 rounded',
-                response.replan
-                  ? 'bg-amber-500/20 text-amber-300'
-                  : 'bg-surface-elevated text-[var(--color-text)]'
+                'text-sm font-medium',
+                response.success ? 'text-emerald-300' : 'text-red-300'
               )}>
-                {response.replan ? 'Yes' : 'No'}
+                {response.success ? 'Task Completed' : 'Task Failed'}
+              </span>
+              <span className="text-xs text-[var(--color-text-muted)] ml-auto">
+                {response.timestamp.toLocaleTimeString()}
               </span>
             </div>
-          )}
-        </Card>
-      )}
-
-      {/* Instructions */}
-      <div className="space-y-4">
-        <Card className="p-6 bg-gradient-to-br from-slate-800/50 to-slate-900/50 border-border">
-          <div className="flex items-center gap-2 mb-4">
-            <h5 className="font-semibold text-white">How to Use Send Task</h5>
-          </div>
-
-          <div className="space-y-4">
-            {/* Connection Check */}
-            <div className="flex items-start gap-3">
-              <div className="w-6 h-6 bg-emerald-500/20 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                <CheckCircle className="w-3.5 h-3.5 text-emerald-400" />
-              </div>
-              <div>
-                <h6 className="font-medium text-white mb-1">Check Connection</h6>
-                <p className="text-sm text-[var(--color-text-secondary)]">Ensure the robot shows "Connected" status with green indicators</p>
-              </div>
-            </div>
-
-            {/* Enter Task */}
-            <div className="flex items-start gap-3">
-              <div className="w-6 h-6 bg-blue-500/20 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                <Pencil className="w-3.5 h-3.5 text-blue-400" />
-              </div>
-              <div>
-                <h6 className="font-medium text-white mb-1">Enter Task Description</h6>
-                <p className="text-sm text-[var(--color-text-secondary)]">Write a clear, natural language description of what you want the robot to do</p>
-                <div className="mt-2 p-2 bg-surface/60 rounded text-xs text-[var(--color-text-muted)] font-mono">
-                  Example: "navigate to the kitchen and pick up the red cup"
-                </div>
-              </div>
-            </div>
-
-            {/* Send Command */}
-            <div className="flex items-start gap-3">
-              <div className="w-6 h-6 bg-cyber-500/20 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                <Send className="w-3.5 h-3.5 text-cyber-400" />
-              </div>
-              <div>
-                <h6 className="font-medium text-white mb-1">Send Task</h6>
-                <p className="text-sm text-[var(--color-text-secondary)]">Click the "Send Task" button to execute the command on the robot</p>
-              </div>
-            </div>
-
-            {/* View Response */}
-            <div className="flex items-start gap-3">
-              <div className="w-6 h-6 bg-purple-500/20 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                <Eye className="w-3.5 h-3.5 text-purple-400" />
-              </div>
-              <div>
-                <h6 className="font-medium text-white mb-1">Monitor Response</h6>
-                <p className="text-sm text-[var(--color-text-secondary)]">Watch for the robot's execution status and detailed response message</p>
-              </div>
-            </div>
-
-            {/* Advanced Options */}
-            <div className="flex items-start gap-3">
-              <div className="w-6 h-6 bg-amber-500/20 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+            <pre className={cn(
+              'whitespace-pre-wrap font-mono text-xs leading-relaxed mt-2',
+              response.success ? 'text-emerald-300/80' : 'text-red-300/80'
+            )}>
+              {response.message}
+            </pre>
+            {response.replan && (
+              <div className="mt-3 flex items-center gap-2">
                 <RotateCcw className="w-3.5 h-3.5 text-amber-400" />
+                <span className="text-xs font-medium text-amber-300">Replan required</span>
               </div>
-              <div>
-                <h6 className="font-medium text-white mb-1">Replan Indicator</h6>
-                <p className="text-sm text-[var(--color-text-secondary)]">Check "Replan Required" flag for tasks that need planning adjustments</p>
-              </div>
-            </div>
+            )}
           </div>
+        )}
+      </div>
 
-          {/* Tips */}
-          <div className="mt-6 p-3 bg-cyber-500/10 border border-cyber-500/20 rounded-lg">
-            <h6 className="font-medium text-cyber-400 mb-2 flex items-center gap-2">
-              <Info className="w-4 h-4" />
-              Pro Tips
-            </h6>
-            <ul className="text-xs text-[var(--color-text)] space-y-1">
-              <li>• Be specific about objects, locations, and actions</li>
-              <li>• Test simple tasks first before complex ones</li>
-              <li>• Use the robot's capabilities as reference</li>
-              <li>• Monitor execution status for task progress</li>
-            </ul>
+      {/* Right column: telemetry panels */}
+      <div className="space-y-4">
+        {/* Video feed */}
+        <div className="rounded-lg border border-border bg-surface-overlay/60 overflow-hidden">
+          <div className="flex items-center gap-2 px-4 py-2.5 border-b border-border-subtle">
+            <Video className="w-4 h-4 text-[var(--color-text-muted)]" />
+            <span className="text-sm font-medium text-[var(--color-text-secondary)]">Live Video Feed</span>
           </div>
-        </Card>
+          <div className="aspect-video flex flex-col items-center justify-center text-[var(--color-text-muted)] bg-surface/50">
+            <Video className="w-10 h-10 mb-3 opacity-40" />
+            <p className="text-sm">Video feed not connected</p>
+            <p className="text-xs mt-1 font-mono opacity-50">
+              /robots/{robot.robot_id}/video
+            </p>
+          </div>
+        </div>
+
+        {/* Joint states */}
+        <div className="rounded-lg border border-border bg-surface-overlay/60 overflow-hidden">
+          <div className="flex items-center gap-2 px-4 py-2.5 border-b border-border-subtle">
+            <Activity className="w-4 h-4 text-[var(--color-text-muted)]" />
+            <span className="text-sm font-medium text-[var(--color-text-secondary)]">Joint States</span>
+          </div>
+          <div className="p-4">
+            <table className="w-full text-xs">
+              <thead>
+                <tr className="text-[var(--color-text-muted)] border-b border-border-subtle">
+                  <th className="text-left pb-2 font-medium">Joint</th>
+                  <th className="text-right pb-2 font-medium">Position</th>
+                  <th className="text-right pb-2 font-medium">Velocity</th>
+                  <th className="text-right pb-2 font-medium">Torque</th>
+                </tr>
+              </thead>
+              <tbody className="text-[var(--color-text-muted)]">
+                {['base', 'shoulder', 'elbow', 'wrist_1', 'wrist_2', 'gripper'].map(joint => (
+                  <tr key={joint} className="border-b border-border-subtle">
+                    <td className="py-1.5 font-mono">{joint}</td>
+                    <td className="py-1.5 text-right">—</td>
+                    <td className="py-1.5 text-right">—</td>
+                    <td className="py-1.5 text-right">—</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            <p className="text-xs text-[var(--color-text-muted)] font-mono mt-3 text-center opacity-50">
+              /robots/{robot.robot_id}/joints
+            </p>
+          </div>
+        </div>
+
+        {/* Command log */}
+        <div className="rounded-lg border border-border bg-surface-overlay/60 overflow-hidden">
+          <div className="flex items-center gap-2 px-4 py-2.5 border-b border-border-subtle">
+            <Terminal className="w-4 h-4 text-[var(--color-text-muted)]" />
+            <span className="text-sm font-medium text-[var(--color-text-secondary)]">Joint Commands</span>
+          </div>
+          <div className="h-32 flex flex-col items-center justify-center text-[var(--color-text-muted)] bg-surface/50">
+            <Terminal className="w-8 h-8 mb-2 opacity-40" />
+            <p className="text-xs">Command stream not connected</p>
+            <p className="text-xs mt-1 font-mono opacity-50">
+              /robots/{robot.robot_id}/commands
+            </p>
+          </div>
+        </div>
       </div>
     </div>
   )

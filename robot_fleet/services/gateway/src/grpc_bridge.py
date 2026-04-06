@@ -18,8 +18,6 @@ from google.protobuf.json_format import MessageToDict
 import asyncio
 
 
-# Note: Strategy mappings removed - now using integer enum values directly
-
 TASK_STATUS_MAP = {
     0: "unknown",
     1: "pending",
@@ -185,7 +183,8 @@ class GRPCBridge:
                 if robot["robot_id"] == robot_id:
                     return robot
             return None
-        except Exception:
+        except Exception as e:
+            logger.error("Error getting robot status for %s: %s", robot_id, e)
             return None
 
     def get_robot(self, robot_id: str) -> Optional[Dict[str, Any]]:
@@ -197,7 +196,8 @@ class GRPCBridge:
             if hasattr(response, "HasField") and response.HasField("robot"):
                 return self._robot_to_dict(response.robot)
             return None
-        except Exception:
+        except Exception as e:
+            logger.error("Error getting robot %s: %s", robot_id, e)
             return None
     
     def register_robot_from_yaml(self, config_path: str, robot_id: Optional[str] = None) -> Dict[str, Any]:
@@ -306,7 +306,8 @@ class GRPCBridge:
             if response.goal and response.goal.goal_id:
                 return self._goal_to_dict(response.goal)
             return None
-        except Exception:
+        except Exception as e:
+            logger.error("Error getting goal %s: %s", goal_id, e)
             return None
     
     def create_goal(self, description: str) -> Optional[Dict[str, Any]]:
@@ -316,7 +317,8 @@ class GRPCBridge:
             if response.goal:
                 return self._goal_to_dict(response.goal)
             return None
-        except Exception:
+        except Exception as e:
+            logger.error("Error creating goal: %s", e)
             return None
     
     def delete_goal(self, goal_id: int) -> Dict[str, Any]:
@@ -362,7 +364,8 @@ class GRPCBridge:
                     logger.error("Failed to fetch plan details for %s: %s", plan_id, e, exc_info=True)
                 return plan_dict
             return None
-        except Exception:
+        except Exception as e:
+            logger.error("Error getting plan %s: %s", plan_id, e)
             return None
 
     async def list_plans_async(self) -> List[Dict[str, Any]]:
@@ -425,9 +428,9 @@ class GRPCBridge:
         Uses MANUAL planning strategy and NONE allocation strategy."""
         try:
             response = self.client.create_plan(
-                planning_strategy=4,  # MANUAL = no auto-planning
+                planning_strategy=fleet_manager_pb2.PlanningStrategy.MANUAL_PLAN,
                 goal_ids=goal_ids or [],
-                allocation_strategy=4,  # NONE = no auto-allocation
+                allocation_strategy=fleet_manager_pb2.AllocationStrategy.NONE,
                 name=name,
                 description=description
             )
@@ -438,7 +441,7 @@ class GRPCBridge:
             logger.error(f"Error creating manual plan: {e}")
             return None
     
-    def allocate_plan(self, plan_id: int, allocation_strategy: str) -> Dict[str, Any]:
+    def allocate_plan(self, plan_id: int, allocation_strategy: int) -> Dict[str, Any]:
         """Allocate robots to tasks in an existing plan."""
         try:
             response = self.client.allocate_plan(plan_id, allocation_strategy)
@@ -539,7 +542,8 @@ class GRPCBridge:
             if response.task and response.task.task_id:
                 return self._task_to_dict(response.task)
             return None
-        except Exception:
+        except Exception as e:
+            logger.error("Error getting task %s: %s", task_id, e)
             return None
     
     def create_task(
@@ -563,8 +567,10 @@ class GRPCBridge:
             )
             if response.task:
                 return self._task_to_dict(response.task)
+            logger.warning("create_task returned no task for plan %s", plan_id)
             return None
-        except Exception:
+        except Exception as e:
+            logger.error("Error creating task for plan %s: %s", plan_id, e)
             return None
 
     def update_task(
@@ -595,7 +601,8 @@ class GRPCBridge:
             if response.task and response.task.task_id:
                 return self._task_to_dict(response.task)
             return None
-        except Exception:
+        except Exception as e:
+            logger.error("Error updating task %s: %s", task_id, e)
             return None
 
     def delete_task(self, task_id: int) -> Dict[str, Any]:
@@ -627,12 +634,14 @@ class GRPCBridge:
             if ws:
                 return self._world_statement_to_dict(ws)
             return None
-        except Exception:
+        except Exception as e:
+            logger.error("Error adding world statement: %s", e)
             return None
     
     def delete_world_statement(self, statement_id: str) -> bool:
         """Delete a world statement."""
         try:
             return self.client.delete_world_statement(statement_id)
-        except Exception:
+        except Exception as e:
+            logger.error("Error deleting world statement %s: %s", statement_id, e)
             return False

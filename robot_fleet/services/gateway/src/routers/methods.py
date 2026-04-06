@@ -11,7 +11,7 @@ from typing import List
 from fastapi import APIRouter, HTTPException
 
 from ..config import PLANNER_TYPES_DIR, ALLOCATOR_TYPES_DIR
-from ..services import scan_all_method_types, load_planner_summary
+from ..services import scan_all_method_types, scan_planner_types, scan_allocator_types, load_planner_summary
 
 router = APIRouter(prefix="/methods")
 

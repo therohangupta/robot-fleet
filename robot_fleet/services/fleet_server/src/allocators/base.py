@@ -91,5 +91,10 @@ def get_allocator(allocation_strategy: int, db_url: str = None, registry: Option
             "NONE strategy means no allocation. "
             "Check for NONE before calling get_allocator() and skip allocation."
         )
+    elif allocation_strategy == fleet_manager_pb2.AllocationStrategy.MANUAL_ALLOCATION:
+        raise ValueError(
+            "MANUAL_ALLOCATION strategy means robots are assigned manually per-task. "
+            "Check for MANUAL_ALLOCATION before calling get_allocator() and skip allocation."
+        )
     else:
         raise ValueError(f"Unknown allocation strategy: {allocation_strategy}")
