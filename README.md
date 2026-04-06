@@ -302,6 +302,7 @@ robot_fleet/
 │   ├── fake_robots/       # Docker build/run scripts for fake robots
 │   ├── database_mgmt/     # DB backup/restore scripts
 │   └── grpc_gen.sh        # Regenerate protobuf stubs
+├── docs/                  # Architecture and design documentation
 ├── cli/                   # robotctl CLI
 ├── docker-compose.yml     # Production Docker Compose
 └── docker-compose.dev.yml # Dev overlay (bind mounts, live reload)

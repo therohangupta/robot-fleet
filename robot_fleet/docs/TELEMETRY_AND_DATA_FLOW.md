@@ -1,19 +1,39 @@
 # Telemetry, Data Flow, and Robot → Storage Pipeline
 
-Telemetry is **not** just lightweight heartbeats. It includes **execution data** for collection and training: video, images, joint positions, logs. The **Telemetry service** is a **separate server** that ingests from robots, writes to your storage, and exposes **read APIs** so the **Gateway (BFF)** can query it and pass data to the frontend for display. The frontend never talks to the Telemetry service directly.
+Telemetry is **not** just lightweight heartbeats. Long term it includes **execution data** for collection and training: video, images, joint positions, logs. The **Telemetry service** is a **separate HTTP server** that ingests from robots, holds (today: in-memory) state, and exposes **read APIs** so the **Gateway (BFF)** can query it and pass data to the frontend for display. The frontend never talks to the Telemetry service directly.
 
 ---
 
 ## 1. What handles telemetry today (v2)
 
-**Only the Gateway** has telemetry logic (as a stopgap):
+### Telemetry service (canonical path)
 
-- **`services/gateway/src/routers/telemetry.py`**
-  - **`POST /api/telemetry/heartbeat`**: accepts `{ robot_id, reachable, busy?, ts? }` from robots.
-  - Stores the last heartbeat per robot in memory (`_heartbeats`).
-  - No persistence, no joint/video, no forwarding to your own storage.
+The **Telemetry service** is a dedicated FastAPI app under **`services/telemetry/src/`**:
 
-So today, “telemetry” = **heartbeats only**. Joint positions, video, and logs are **not** implemented. The target is a dedicated **Telemetry service** (another server) for ingest + storage + query; the Gateway will **query** that service and pass results to the frontend for display.
+| Area | Files / behavior |
+|------|------------------|
+| App entry, lifespan, timeout scanner | `app.py` — background task calls `HeartbeatStore.check_timeouts()` and publishes when robots go stale |
+| Store | `heartbeat_store.py` — thread-safe in-memory ring buffer (last **N** heartbeats per robot; **N** = `MAX_HEARTBEATS_PER_ROBOT` in `packages/config.py`) |
+| Ingest | `routers/ingest.py` — **`POST /ingest/heartbeat`** |
+| Read API | `routers/health.py` — **`GET /health/summary`**, **`GET /health/{robot_id}`** |
+| Events | `events.py` — `HealthChangedEvent` with `type: "telemetry.health_changed"` |
+| Publish to Gateway | `publishing.py` — HTTP **`POST`** to `GATEWAY_EVENT_URL` (default `{GATEWAY_URL}/internal/events`) |
+
+**Robots** should POST heartbeats to **`{TELEMETRY_URL}/ingest/heartbeat`** (Compose exposes Telemetry on **port 9000** by default; `TELEMETRY_URL` / `TELEMETRY_PORT` come from `packages/config.py`).
+
+**Ingest body** (see `routers/ingest.py`): `host`, `port`, `reachable`, optional `busy`, optional `ts`. The store’s primary key is **`host:port`** (task server address), so the Gateway can join Telemetry data with Fleet robots using each robot’s `task_server_info`.
+
+**Joint positions, video, and rich logs** are still **not** implemented on this path; the target architecture below still applies for those.
+
+### Gateway (consumer + real-time fan-out)
+
+- **`services/gateway/src/services/telemetry_client.py`** — fetches **`GET {TELEMETRY_URL}/health/summary`** and **`GET {TELEMETRY_URL}/health/{robot_id}`** when serving Gateway APIs.
+- **`services/gateway/src/routers/robots.py`** — robot health endpoints default to **`source=telemetry`**: they merge Fleet’s robot list with Telemetry’s summary keyed by **`host:port`**.
+- **`services/gateway/src/routers/websocket.py`** — accepts **`POST /internal/events`** from Fleet **and** Telemetry; maps **`telemetry.health_changed`** → invalidates **`robot-health`** for WebSocket clients (same event bus as fleet mutations).
+
+### Legacy route on the Gateway (optional / migration)
+
+**`services/gateway/src/routers/telemetry.py`** still defines **`POST /api/telemetry/heartbeat`** with a **`robot_id`**-shaped payload and an in-memory **`_heartbeats`** dict on the Gateway. That path is **legacy**; with Telemetry deployed, robots should use **`POST …/ingest/heartbeat`** on the Telemetry service so the Gateway reads one source of truth via **`telemetry_client`**.
 
 ---
 
@@ -68,9 +88,10 @@ A clean way to do that:
                                         │
                                         ▼
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│  Central telemetry ingest (Gateway or dedicated service)                     │
-│  - Receives streams per robot (and optionally tags with robot_id, plan_id,  │
-│    task_id, session_id for later query).                                     │
+│  Central telemetry ingest                                                   │
+│  **Today:** Telemetry service — heartbeats only (`POST /ingest/heartbeat`).  │
+│  **Target:** same service (or additional routes) receives streams per      │
+│    robot (tags: robot_id / host:port, plan_id, task_id, session_id).        │
 │  - Normalizes / validates (e.g. canonical joint schema, chunked video).    │
 │  - Forwards to storage you configure.                                       │
 └─────────────────────────────────────────────────────────────────────────────┘
@@ -86,45 +107,31 @@ A clean way to do that:
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
 
-**Displaying telemetry in the UI:** The **Telemetry service** is another **server**. It exposes **read APIs** (e.g. health summary, last N joints for a robot/task, video URL for a task). The **Gateway (BFF)** calls those APIs and passes the response to the frontend for display. So: **Browser → Gateway → Telemetry service (query) → Gateway → Browser**. The frontend never talks to the Telemetry service directly.
+**Displaying telemetry in the UI:** The **Telemetry service** exposes **read APIs** (today: health summary derived from heartbeats). The **Gateway (BFF)** calls those APIs and passes the response to the frontend. So: **Browser → Gateway → Telemetry service (query) → Gateway → Browser**. The frontend never talks to the Telemetry service directly.
 
-- **Who handles telemetry:** a dedicated **Telemetry service** (another server): ingest from robots, write to your storage, and expose **read APIs**. Today a minimal version lives in the Gateway (`services/gateway/src/routers/telemetry.py`); the target is to move ingest + storage + read API to a separate Telemetry service that the Gateway **queries** for display.
-- **Flow of data (ingest):** robot (ROS/Rust collector) → Telemetry service → your storage. **Flow of data (display):** Frontend → Gateway → Telemetry service (query) → Gateway → Frontend. The frontend never talks to the Telemetry service or the robot for telemetry; the Gateway queries the Telemetry service and passes data (summaries, joint samples, video URLs) to the frontend for display.
+- **Who handles telemetry (heartbeats):** **`services/telemetry/src/`** — ingest, store, read API, and push **`telemetry.health_changed`** to the Gateway. The Gateway **queries** Telemetry on demand when serving health APIs and reacts to events for WebSocket invalidation (see `TELEMETRY_STORE_AND_EVENTS.md`).
+- **Flow of data (ingest, heartbeats):** robot → **`POST {TELEMETRY_URL}/ingest/heartbeat`** → Telemetry store → (optional) event → Gateway → WS → UI refetch.
+- **Flow of data (display):** Frontend → Gateway → **`GET {TELEMETRY_URL}/health/...`** → Gateway → Frontend.
 
-Concretely:
+Concretely (heartbeats **implemented**; streams **future**):
 
 1. **Robot side (your responsibility per robot)**
-   - Keep the existing task server for **control** (`/do_task`, `/health`, heartbeat).
-   - Add a **telemetry sender** (ROS node, Rust binary, or another process) that:
-     - Subscribes to joint state, camera, etc. (ROS1/2 or hardware APIs).
-     - Pushes to the central ingest:
-       - **Low-rate / small payloads** (e.g. joint positions, battery): HTTP POST or WebSocket to something like `POST /api/telemetry/stream` or `WS /api/telemetry/stream` with `robot_id` and optional `plan_id`/`task_id`/`session_id`.
-       - **High-rate or large** (e.g. video): either chunked HTTP uploads to the same ingest, or stream to a **media service** (e.g. RTSP/WebRTC to a recorder that writes to object storage). The ingest or media service then writes to **your specified storage** (config-driven: bucket, path, DB table).
+   - Keep the existing task server for **control** (`/do_task`, `/health`).
+   - Send heartbeats to **`{TELEMETRY_URL}/ingest/heartbeat`** with **`host`/`port`** matching the task server Fleet knows about.
+   - **Later:** add a **telemetry sender** (ROS node, Rust binary, etc.) that pushes structured streams to new ingest endpoints on the Telemetry service (or a sibling component).
 
-2. **Central ingest (Gateway or dedicated service)**
-   - **Already:** `POST /api/telemetry/heartbeat` (keep it).
-   - **Add:** e.g. `POST /api/telemetry/stream` (and/or WebSocket) for structured telemetry:
-     - Body or messages: `robot_id`, optional `plan_id`, `task_id`, `session_id`, `ts`, and payload (e.g. joint positions, log lines).
-     - Validate/normalize (e.g. canonical schema for “joint_state”).
-     - Forward to:
-       - **Time-series DB** (you configure connection and retention).
-       - **Object storage** (you configure bucket/prefix; e.g. `s3://your-bucket/telemetry/{robot_id}/{date}/{stream_id}.json` or `.bin`).
-   - **Video:** either the same service accepts binary chunks and writes to object storage, or a separate **media/recording** component (e.g. RTSP/WebRTC sink) writes to your bucket; ingest only stores **metadata** (e.g. `robot_id`, `task_id`, `url`, `start_ts`, `end_ts`) in Postgres or your DB so you can query “all videos for this task”.
+2. **Central ingest (Telemetry service)**
+   - **Implemented:** `POST /ingest/heartbeat`, read **`GET /health/summary`**, **`GET /health/{robot_id}`**, publish to Gateway **`POST /internal/events`**.
+   - **Add later:** e.g. `POST /ingest/stream` (and/or WebSocket) for joints/logs; chunked or streaming video to object storage; metadata in Postgres.
 
 3. **Storage you specify**
-   - Configure the ingest (or media service) with:
-     - Time-series DB URL and schema (if used).
-     - Object storage bucket + region/credentials (and optional path template).
-     - Optionally, Postgres (or existing fleet DB) for metadata and indexes.
-   - So “where it’s stored” is **fully under your control** via config; the code path is: robot → central ingest → your storage.
+   - Configure the ingest (or media service) with time-series DB, object storage, and optional Postgres — **future** for high-volume telemetry; heartbeats today stay in-process on the Telemetry service unless you add Redis etc. (see `TELEMETRY_STORE_AND_EVENTS.md`).
 
 4. **Frontend**
-   - For “talking to one robot” in the sense of **control**: unchanged (Send Task → robot; Execute Plan → Gateway → Fleet → robot).
-   - For **telemetry**: no direct robot↔frontend telemetry. Frontend can:
-     - Call Gateway (or a separate API) that **reads from your storage** (e.g. “last N joint samples for robot X”, “list of videos for task Y”) for dashboards and debugging.
-     - Optionally, live view via a **stream** that the Gateway (or media service) fans out from the ingest or from the recorder, so the robot still sends once to the ingest.
+   - For **control**: unchanged (Send Task → robot; Execute Plan → Gateway → Fleet → robot).
+   - For **telemetry**: no direct robot↔frontend telemetry. Frontend uses Gateway APIs; Gateway reads Telemetry and receives push invalidations over **`/ws/global-updates`**.
 
-This keeps a single path: **robot → central ingest → your specified storage**, and each robot only needs to know how to **send** to that ingest (and how to read from ROS/Rust on its side).
+This keeps a single path for heartbeats: **robot → Telemetry → (events + read API) → Gateway → UI**, and leaves room to grow **robot → Telemetry → your storage** for training-scale data.
 
 ---
 
@@ -132,8 +139,8 @@ This keeps a single path: **robot → central ingest → your specified storage*
 
 | Question | Answer |
 |----------|--------|
-| **What handles telemetry?** | **Gateway** today: only `routers/telemetry.py` (heartbeat). For full telemetry, the same component (or a dedicated ingest service) should receive streams and write to your storage. |
-| **Frontend → one robot flow** | **Control:** (1) “Send Task” = frontend → robot `POST /do_task`; response = `TaskResult`. (2) Execute plan = frontend → Gateway → Fleet → robot `/do_task`; “data back” = task status/result via DB and Gateway APIs/WS. **Telemetry:** not implemented; target is robot → ingest → your storage; frontend queries storage/API, not the robot. |
-| **Joint / video / storage** | Robot uses ROS1/2 or Rust to read data → sends to central ingest (Gateway or service) → ingest writes to **your configured** time-series DB and object storage; optional metadata in Postgres. Each robot implements only the reader/sender; storage location is configured in the central ingest. |
+| **What handles telemetry (heartbeats)?** | **Telemetry service** at `services/telemetry/src/`. Gateway **`telemetry_client`** reads **`/health/*`**; **`websocket`** handles **`telemetry.health_changed`**. Legacy **`routers/telemetry.py`** on the Gateway is optional. |
+| **Frontend → one robot flow** | **Control:** (1) “Send Task” = frontend → robot `POST /do_task`. (2) Execute plan = frontend → Gateway → Fleet → robot `/do_task`; “data back” = task status/result via DB and Gateway APIs/WS. **Telemetry:** heartbeats → Telemetry ingest; UI sees health via Gateway (and WS invalidation). **Joints/video:** not implemented yet. |
+| **Joint / video / storage** | Target: robot collector → Telemetry (or media) ingest → **your** time-series DB and object storage. **Today:** only heartbeat ingest + in-memory store on Telemetry. |
 
-If you want, next step can be a short “Telemetry ingest API” spec (e.g. `POST /api/telemetry/stream` schema and a minimal storage adapter interface) and where in `robot_fleet` to add it (e.g. under `services/gateway/src/routers/telemetry.py` and a new `services/gateway/src/telemetry/` for storage wiring).
+For the event-driven health path and store patterns, see **`TELEMETRY_STORE_AND_EVENTS.md`**.

@@ -1,8 +1,12 @@
 # How to run and test robot_fleet
 
-Everything runs from the **robot_fleet** repo only. No old_robot_fleet.
+Everything runs from the **robot_fleet** directory (this package). No old_robot_fleet.
 
-Assumptions: Postgres is running (e.g. database `robot_fleet`, user `robot_user`). Optional: set `DATABASE_URL` or use a `.env` in the workspace root.
+**Layout:** Your workspace root is the directory that **contains** the `robot_fleet/` folder. Paths below use that convention.
+
+**Postgres:** Defaults for bare-metal Python services match `packages/config.py`: host `localhost`, port **5432**, database `robot_fleet`, user `robot_user`, password `secret`. Override with `DATABASE_URL` or `DB_*` env vars. **Docker Compose** maps the container to the host as **localhost:5433** → container `5432`, so if only the DB runs in Compose and the stack runs on the host, set `DB_PORT=5433` (or a full `DATABASE_URL` using port 5433).
+
+Optional: for Compose, `docker-compose.yml` loads `../.env` (the directory **above** `robot_fleet/`, i.e. the same workspace root that contains `robot_fleet`) for extra env on **fleet-server**.
 
 You need **four terminals** for bare-metal dev (or use Docker Compose). From the **workspace root** (the directory that contains `robot_fleet`):
 
@@ -16,7 +20,7 @@ pip install -e .
 cd ..
 ```
 
-This makes `packages` and `services` importable.
+This editable install exposes the `packages`, `services`, and `cli` packages (including the `robotctl` entry point).
 
 ---
 
@@ -38,7 +42,7 @@ cd robot_fleet
 python -m services.telemetry.src --port 9000
 ```
 
-Leave it running. Robots POST heartbeats here; gateway queries it for health.
+Leave it running. Robots POST heartbeats here; the gateway queries it for health.
 
 ---
 
@@ -49,7 +53,7 @@ cd robot_fleet/services/gateway
 uvicorn src.main:app --reload --port 8000
 ```
 
-Leave it running. The frontend proxies `/api` and `/ws` to this port.
+Leave it running. The Vite dev server proxies `/api` and `/ws` to this port (see `services/dashboard-web/vite.config.ts`).
 
 ---
 
@@ -57,11 +61,22 @@ Leave it running. The frontend proxies `/api` and `/ws` to this port.
 
 ```bash
 cd robot_fleet/services/dashboard-web
-npm install
+npm install   # once per clone
 npm run dev
 ```
 
 Open **http://localhost:5173** in the browser.
+
+---
+
+## Fake robots and demo data (optional)
+
+From the **workspace root** (directory containing `robot_fleet`):
+
+- **Fake example robots (Docker):** `./robot_fleet/scripts/fake_robots/run_examples_docker.sh`  
+  Build images first when needed: `./robot_fleet/scripts/fake_robots/rebuild_examples_docker.sh`  
+  For bind-mounted robot code during dev, use `./robot_fleet/scripts/fake_robots/run_examples_docker_dev.sh` instead (see `robots/fake/README.md`).
+- **Populate demo DB data:** `./robot_fleet/scripts/examples/populate_fake.sh`
 
 ---
 
@@ -76,64 +91,66 @@ Open **http://localhost:5173** in the browser.
 ## Summary
 
 | Component     | Command (from workspace root)                                                                 | Port  |
-|--------------|------------------------------------------------------------------------------------------------|-------|
+|--------------|-------------------------------------------------------------------------------------------------|-------|
 | Fleet server  | `cd robot_fleet && python -m services.fleet_server.src -v`                                   | 50051 |
 | Telemetry     | `cd robot_fleet && python -m services.telemetry.src --port 9000`                             | 9000  |
-| Gateway       | `cd robot_fleet/services/gateway && uvicorn src.main:app --reload --port 8000`              | 8000  |
+| Gateway       | `cd robot_fleet/services/gateway && uvicorn src.main:app --reload --port 8000`               | 8000  |
 | Frontend      | `cd robot_fleet/services/dashboard-web && npm run dev`                                       | 5173  |
 
-All four run from the **robot_fleet** repo only.
+All four run against the **robot_fleet** tree; use `pip install -e .` from `robot_fleet/` first for Python imports and `robotctl`.
 
 ---
 
 ## Docker (scalable)
 
-From **robot_fleet** repo root:
+Compose files live in **`robot_fleet/`**: `docker-compose.yml` and `docker-compose.dev.yml`.
+
+From the **workspace root**:
 
 ```bash
 cd robot_fleet
 docker compose up --build
 ```
 
-This starts **Postgres**, **fleet-server** (gRPC 50051), **telemetry** (HTTP 9000), and **gateway** (HTTP 8000) in separate containers. They talk over the Compose network (e.g. `gateway:8000`, `telemetry:9000`, `fleet-server:50051`, `db:5432`).
+This starts **Postgres**, **fleet-server** (gRPC 50051), **telemetry** (HTTP 9000), and **gateway** (HTTP 8000) in separate containers. They use the Compose network (e.g. `gateway:8000`, `telemetry:9000`, `fleet-server:50051`, `db:5432` inside the network).
 
 - **Gateway**: http://localhost:8000 (e.g. `curl http://localhost:8000/health`)
 - **Telemetry**: http://localhost:9000 (e.g. `curl http://localhost:9000/healthz`)
 - **Fleet gRPC**: localhost:50051 (for CLI/scripts)
-- **DB**: Container Postgres on port 5433 (host), uses persistent Docker volume `db_data`
+- **DB**: Postgres is reachable from the **host** at **localhost:5433** (maps to `5432` in the container). Data uses the persistent Docker volume `db_data`.
 
-Run the **frontend** on the host for dev: `cd robot_fleet/services/dashboard-web && npm run dev`, then open http://localhost:5173 (it proxies to the gateway on port 8000).
+Run the **frontend** on the host for dev: `cd robot_fleet/services/dashboard-web && npm install && npm run dev`, then open http://localhost:5173 (proxies to the gateway on port 8000).
 
 ---
 
 ## Importing existing data into the Docker Postgres (one-time)
 
-The containerized Postgres uses a **persistent Docker volume** (`db_data`). Data survives container restarts. But it starts empty.
+The containerized Postgres uses a **persistent Docker volume** (`db_data`). Data survives container restarts. It starts empty until you migrate or import.
 
-To import your existing host Postgres data into the container:
+To import from a Postgres instance on your **host** (typical bare-metal port **5432**) into the **Compose** database (**5433** on the host):
 
 ```bash
 # 1. Make sure the db container is running
 cd robot_fleet
 docker compose up db -d
 
-# 2. Export from your HOST Postgres (rohangupta@localhost:5432/robot_fleet)
-pg_dump -U rohangupta -d robot_fleet > /tmp/robot_fleet_dump.sql
+# 2. Export from your HOST Postgres (adjust user/db to match your local instance)
+pg_dump -h localhost -p 5432 -U YOUR_HOST_USER -d robot_fleet > /tmp/robot_fleet_dump.sql
 
-# 3. Import into the CONTAINER Postgres (robot_user@localhost:5433/robot_fleet)
-#    Note: container exposes port 5433 on the host
+# 3. Import into the CONTAINER Postgres (robot_user @ host port 5433)
 psql -h localhost -p 5433 -U robot_user -d robot_fleet < /tmp/robot_fleet_dump.sql
-#    Password: secret
+#    Password: secret (default in docker-compose.yml / packages/config.py)
 
 # 4. Verify
 psql -h localhost -p 5433 -U robot_user -d robot_fleet -c "SELECT COUNT(*) FROM goals;"
 ```
 
-After this, your container DB has your existing data, and any changes persist in the `db_data` volume.
+After this, the container DB holds the imported data, and changes persist in the `db_data` volume.
 
 **To completely reset the container DB** (start fresh):
 
 ```bash
+cd robot_fleet
 docker compose down -v   # -v removes volumes
 docker compose up --build
 ```
@@ -143,14 +160,14 @@ docker compose up --build
 ## What to test end-to-end
 
 - **DB**: Compose starts Postgres; fleet-server and gateway connect to it. No extra setup if you use the built-in `db` service.
-- **Fleet server**: gRPC on 50051. From the host you can use the CLI: `robotctl world list`, `robotctl robots list`, etc. (CLI must be installed from this repo and point at `localhost:50051` or the gateway.)
-- **Telemetry service**: HTTP on 9000. Robots (or scripts) POST heartbeats here; gateway queries for health.
+- **Fleet server**: gRPC on 50051. From the host you can use the CLI: `robotctl world list`, `robotctl robots list`, etc. (requires `pip install -e .` from `robot_fleet/`; point at `localhost:50051` or use gateway-backed flows as appropriate.)
+- **Telemetry service**: HTTP on 9000. Robots (or scripts) POST heartbeats here; the gateway queries for health.
 - **Gateway**: HTTP on 8000. Try:
   - `curl -s http://localhost:8000/health`
   - `curl -s http://localhost:8000/api/robots`
   - `curl -s http://localhost:8000/api/robots/health/all`
   - `curl -s http://localhost:8000/api/goals`
-- **Event-driven updates**: Create/update a goal or plan via API or CLI; the fleet server sends an event to the gateway, which pushes over WebSocket. With the frontend open (on host), you should see updates without polling.
+- **Event-driven updates**: Create/update a goal or plan via API or CLI; the fleet server notifies the gateway, which pushes over WebSocket. With the frontend open on the host, you should see updates without polling.
 - **Heartbeat flow (robots → telemetry → gateway → UI)**:
   1. Send a heartbeat to Telemetry:
 
@@ -172,25 +189,25 @@ docker compose up --build
      curl http://localhost:8000/api/robots/health/all
      ```
 
-  4. If effective reachable changes (e.g. first heartbeat or timeout), Telemetry pushes `telemetry.health_changed` to Gateway, which pushes over WebSocket. The frontend reacts without polling.
+  4. If effective reachable changes (e.g. first heartbeat or timeout), Telemetry pushes `telemetry.health_changed` to the gateway, which pushes over WebSocket. The frontend reacts without polling.
 
 ---
 
 ## Live reload with Docker
 
-- **Frontend**: Run it on the host (`npm run dev`). No change: your UI edits still live-reload. The frontend does **not** need to be in Docker for dev.
-- **Gateway / fleet-server / telemetry in Docker**: By default, code is baked into the image. A code change would require `docker compose up --build` (rebuild + restart).
+- **Frontend**: Run it on the host (`npm run dev`). UI edits live-reload. The frontend does **not** need to be in Docker for dev.
+- **Gateway / fleet-server / telemetry in Docker**: By default, code is baked into the image. A code change requires `docker compose up --build` (rebuild + restart).
 
-To keep **gateway and telemetry live reload** while using Docker for db + fleet-server + gateway + telemetry:
+To keep **gateway** and **telemetry** live reload while still using Compose for Postgres and all services:
 
 ```bash
 cd robot_fleet
 docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build
 ```
 
-- **Gateway**: Source is mounted and the process runs with `uvicorn ... --reload`, so edits to gateway (and shared `packages`) take effect without rebuilding.
-- **Telemetry**: Source is mounted and the process runs with `uvicorn ... --reload`, so edits to telemetry take effect without rebuilding.
-- **Fleet-server**: Source is mounted; restart the fleet-server container to pick up code changes (no rebuild needed).
-- **Frontend**: Still run on the host; point the app at `http://localhost:8000` (gateway). No container needed for dev.
+- **Gateway**: `./services/gateway/src` and `./packages` are mounted read-only; the container runs `uvicorn ... --reload`, so edits there apply without rebuilding the image.
+- **Telemetry**: `./services/telemetry/src` is mounted read-only; the container runs `uvicorn services.telemetry.src.main:app ... --reload` for the same behavior.
+- **Fleet-server**: `./services/fleet_server/src` and `./packages` are mounted read-only; **restart** the `fleet-server` container to pick up Python changes (no image rebuild needed).
+- **Frontend**: Still run on the host; the app talks to `http://localhost:8000` via the Vite proxy. No container needed for local UI dev.
 
 **Does the frontend need to be Dockerized?** For local dev, no—running `npm run dev` on the host keeps UI live reload and is simplest. For production you can serve the built static bundle from a container or a CDN later if you want.

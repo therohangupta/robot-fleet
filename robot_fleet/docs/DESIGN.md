@@ -10,16 +10,20 @@
 
 ### Current repo reality (today)
 - **Fleet control plane (gRPC server)**: `robot_fleet/services/fleet_server/src/service.py`
-  - Owns execution orchestration via `robot_fleet/services/fleet_server/src/executor/executor.py`
-  - Owns DB access through `robot_fleet/packages/fleet_sdk/src/instance_registry.py`
-- **Gateway/BFF (FastAPI)**: `robot_fleet/services/gateway/*`
-  - Exposes `/api/*` to the frontend and bridges to fleet via `robot_fleet/services/gateway/src/grpc_bridge.py`
-  - Exposes event-driven WebSockets in `robot_fleet/services/gateway/src/routers/websocket.py`
-- **Telemetry service (FastAPI)**: `robot_fleet/services/telemetry/*`
-  - Heartbeat ingest and robot health summary
-- **Frontend (Vite/React)**: `robot_fleet/services/dashboard-web/*`
-  - Calls `/api/...` (already aligned with “single UI boundary”)
-- **Robot task servers (examples)**: `robot_fleet/robots/fake/*`
+  - Execution orchestration: `robot_fleet/services/fleet_server/src/executor/executor.py`
+  - DB access: `robot_fleet/packages/fleet_sdk/src/instance_registry.py` (`RobotInstanceRegistry`; also used by gateway gRPC bridge, planners, and allocators)
+  - **Fleet → gateway event callback**: `robot_fleet/services/fleet_server/src/events.py` — fire-and-forget HTTP POST to `GATEWAY_EVENT_URL` (from `robot_fleet/packages/config.py`: same host/port as the gateway plus `/internal/events`; Docker Compose sets this explicitly, e.g. `http://gateway:8000/internal/events`)
+- **Gateway/BFF (FastAPI)**: `robot_fleet/services/gateway/src/app.py`
+  - gRPC to fleet: `robot_fleet/services/gateway/src/grpc_bridge.py`
+  - HTTP API routers: `robot_fleet/services/gateway/src/routers/` — e.g. `plans.py`, `robots.py`, `tasks.py`, `goals.py`, `websocket.py`, `telemetry.py`, `metrics.py`, …
+  - Robot health for the UI: HTTP client to the Telemetry service in `robot_fleet/services/gateway/src/services/telemetry_client.py` (used from `routers/robots.py` via `TELEMETRY_URL` in gateway config)
+- **Telemetry service (FastAPI)**, separate from gateway: `robot_fleet/services/telemetry/src/`
+  - App entry: `app.py`; heartbeat storage: `heartbeat_store.py`; notifying gateway on health changes: `publishing.py` (POSTs `telemetry.health_changed`-style events to the same gateway `/internal/events` path)
+  - Routers: `routers/` (`ingest.py` for `/ingest/heartbeat`, `health.py` for summaries the gateway reads, …)
+- **Frontend (Vite/React)**: `robot_fleet/services/dashboard-web/src/` — `pages/`, `components/`, `lib/`, …
+  - Calls `/api/...` on the gateway (already aligned with “single UI boundary”)
+- **Robot task servers (examples)**: `robot_fleet/robots/fake/` — `moma/`, `nav/`, `pick_place/` (each pushes heartbeats to the Telemetry service)
+- **Shared ports/URLs**: `robot_fleet/packages/config.py` (e.g. `DATABASE_URL`, `GATEWAY_EVENT_URL`; gateway and telemetry import their own `config` modules that align with these)
 
 ---
 
@@ -28,7 +32,7 @@
 #### Components
 - **Robots (many)**: execute tasks + produce telemetry/video.
 - **Fleet Server (Control Plane)**: orchestrates plans/tasks/allocations/execution; writes truth to DB; commands robots.
-- **Gateway/BFF (Data Plane Edge for UI)**: the only browser-facing API; fans out realtime updates; (optionally) ingests telemetry/video or coordinates those services.
+- **Gateway/BFF (Data Plane Edge for UI)**: the only browser-facing API; fans out realtime updates; proxies or composes reads from control plane and telemetry (video/ingress may stay separate or move behind gateway later).
 - **Postgres (Truth Store)**: plans/tasks/robots/goals + execution outcomes + metadata.
 
 Optional later (add only when needed):
@@ -74,8 +78,10 @@ Includes:
 ##### B) Data-plane observability (telemetry + media)
 
 ```text
-Robot(s) → Telemetry/Media Ingress (usually Gateway or a dedicated service) → UI
+Robot(s) → Telemetry service → Gateway/BFF → UI
 ```
+
+(In the current repo, robots **push** heartbeats to Telemetry; the gateway **pulls** health summaries from Telemetry over HTTP for API responses, and Telemetry can **push** lightweight `telemetry.health_changed` notifications to the gateway so WebSocket subscribers invalidate/refetch without polling.)
 
 Includes:
 - robot health heartbeat streams (if treated as telemetry)
@@ -103,11 +109,12 @@ This keeps execution robust under crashes, partitions, and restarts.
 
 ---
 
-### Realtime: event-driven updates (implemented)
-Current state:
-- Fleet server POSTs events to the gateway on every mutation via `robot_fleet/services/gateway/src/routers/websocket.py`.
-- Per-subscriber queues push invalidation signals immediately with no polling.
-- WebSocket clients wake only when there is a real change.
+### Realtime: event-driven updates (**implemented**)
+Current behavior (no polling for invalidation):
+- On control-plane mutations, the fleet server POSTs a small JSON event to the gateway (`GATEWAY_EVENT_URL`, handled in `robot_fleet/services/gateway/src/routers/websocket.py` as `POST /internal/events`).
+- The gateway keeps an in-process **EventBus** with **per-subscriber `asyncio.Queue`s**; each notification delivers query-key hints so React Query (or similar) refetches only what changed.
+- Telemetry can POST the same endpoint when robot health changes so the UI updates immediately.
+- WebSocket clients are woken when there is a real change, not on a fixed poll timer.
 
 ---
 
@@ -137,17 +144,20 @@ Notes:
 - **UI ⇄ Gateway**: REST for queries/mutations; WS/SSE for realtime.
 
 #### Telemetry
-- **Robot → Gateway/Telemetry service**:
-  - low-rate: HTTP POST or WS
+- **Robot → Telemetry service** (current default for heartbeats):
+  - low-rate: HTTP POST (e.g. `/ingest/heartbeat`)
   - high-rate: WS or gRPC streaming
   - logs: WS stream
+- **Telemetry → Gateway**: HTTP for health summaries the BFF serves to the UI; optional HTTP callbacks to `/internal/events` for realtime invalidation (implemented).
 - **Video**:
   - robot publishes RTSP/WebRTC internally
   - gateway/media layer exposes **WebRTC** (or HLS) to browsers
 
 ---
 
-### Naming & class design recommendations (extendable)
+### Naming & class design recommendations (aspirational — not the current codebase)
+These are **forward-looking** naming and layering suggestions. The repo still uses the prototype names; nothing here is a promise to rename immediately.
+
 Current names work for a prototype, but clearer separation helps future growth.
 
 #### Rename by responsibility (recommended)
@@ -157,7 +167,7 @@ Current names work for a prototype, but clearer separation helps future growth.
   - clearer that it executes a plan DAG, not a generic “executor”
 - `RobotClient` → **`RobotTaskClient`**
   - clearer that this is task RPC, not telemetry/media
-- `GRPCBridge` (dashboard/backend) → **`FleetGatewayClient`** or **`FleetControlClient`**
+- `GRPCBridge` (gateway) → **`FleetGatewayClient`** or **`FleetControlClient`**
   - “bridge” is vague; “client” clarifies direction
 
 #### Introduce explicit interfaces (even if implemented in one file today)
@@ -173,7 +183,7 @@ Current names work for a prototype, but clearer separation helps future growth.
 
 #### Organize packages by plane (optional refactor later)
 - `robot_fleet/control_plane/...`
-- `robot_fleet/data_plane/...` (or keep telemetry in dashboard backend)
+- `robot_fleet/data_plane/...` (telemetry already lives in `services/telemetry/` today)
 - `robot_fleet/storage/...` (DB models + registry)
 
 ---
@@ -181,7 +191,7 @@ Current names work for a prototype, but clearer separation helps future growth.
 ### Concrete “best-practice” changes to make next (without breaking docker testing)
 - Keep frontend calling `/api/*` (already true).
 - Keep dashboard backend as Gateway/BFF (already exists).
-- ~~Replace WS polling loops with event-driven updates~~ (done: fleet → gateway → UI via per-subscriber queues).
+- ~~Replace WS polling loops with event-driven updates~~ (done: fleet and telemetry → gateway `POST /internal/events` → per-subscriber queues → UI).
 - Move robot health to a fleet-owned heartbeat/reconciliation model (avoid UI-driven constant probing).
 - Add a documented event schema and keep it stable as features grow.
 - Keep videos/trajectories out of Postgres; store metadata in Postgres and blobs in object storage later.

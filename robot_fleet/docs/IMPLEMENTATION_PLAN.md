@@ -1,197 +1,155 @@
 # RobotFleet v2: Step-by-Step Implementation Plan
 
-This plan orders the main architectural improvements we’ve analyzed and specifies how to test each step. It assumes the current v2 state: Fleet server, Gateway (BFF + telemetry ingest in one process), Dashboard frontend, and fake robots with heartbeat push.
+This document orders the main architectural improvements we analyzed and how to test each step. It reflects **both** the original phased intent and **current implementation status** in the repo (Fleet, **separate** Gateway and Telemetry, Dashboard, fake robots).
 
 ---
 
-## Summary of components we’ve analyzed
+## Status overview
 
-| Component | Role | Target state |
-|-----------|------|--------------|
-| **Fleet server** | Control plane: DB, execution, gRPC. | Emit events on mutations (task/plan/robot) so Gateway can push to UI without polling. |
-| **Gateway (BFF)** | Client-facing: proxy to Fleet, WebSockets, (today) telemetry ingest. | Event-driven WS only; no sleep loops. Eventually: no ingest, only query Telemetry service for display. |
-| **Telemetry service** | Ingest (robot → storage) + read API (Gateway → display). | Separate server: heartbeat, joints, video, images; storage; read API for Gateway. |
-| **Frontend** | Single client talking only to Gateway. | No refetchInterval; rely on WS invalidation and Gateway-proxied telemetry. |
-| **Robots** | Execute tasks (Fleet calls them); push telemetry. | Push to Telemetry service (heartbeat, later streams). |
+| Phase | Topic | Status |
+|-------|--------|--------|
+| **1** | Event-driven updates (remove polling) | **Largely done** — Fleet → Gateway HTTP callback, Gateway event-driven WebSockets with per-subscriber queues; some frontend timers may remain (see Phase 1). |
+| **2** | Robot health from heartbeat (no per-robot `/health` polling) | **Done** — Health for the UI is derived from heartbeat data via the **Telemetry service**; Gateway reads `GET /health/summary` (and per-robot health) from Telemetry. |
+| **3** | Telemetry as a separate service | **Done** — `services/telemetry/src/` on port **9000**; robots POST `TELEMETRY_URL/ingest/heartbeat`; Gateway uses `TELEMETRY_URL` for health. |
+| **4** | Telemetry read API for display (joints, artifacts, …) | **Partially done** — Health read API is implemented end-to-end; **joints / video / artifact list APIs are not implemented yet** (no Telemetry routes + no Gateway proxies for those). |
+| **5** | Full telemetry ingest (streams, object storage, training path) | **Not done** — Future work. |
+
+---
+
+## Summary of components (target vs today)
+
+| Component | Role | Target state | Today |
+|-----------|------|--------------|--------|
+| **Fleet server** | Control plane: DB, execution, gRPC. | Emit events on mutations so Gateway can push to UI without polling. | **Implemented:** `events.py` + `GATEWAY_EVENT_URL` → `POST .../internal/events`. |
+| **Gateway (BFF)** | Client-facing: proxy to Fleet, WebSockets. | Event-driven WS; query Telemetry for display. | **Implemented:** `POST /internal/events`, WS invalidation + execution updates; **telemetry_client** reads health from Telemetry. Legacy `POST /api/telemetry/heartbeat` still in tree for compatibility. |
+| **Telemetry service** | Ingest + read API. | Heartbeat → later joints/video; storage; read API for Gateway. | **Heartbeat ingest + health read API + optional Gateway event publish** (see `services/telemetry/src/`). No joints/video ingest or read routes yet. |
+| **Frontend** | Single client → Gateway only. | Rely on WS invalidation; minimal polling. | **Mostly** WS-driven; **Execution** may still use a short `refetchInterval` on the plan query while executing (see Phase 1). |
+| **Robots** | Tasks + telemetry push. | Push heartbeats to Telemetry. | **Fake robots** POST to `TELEMETRY_URL/ingest/heartbeat`. |
 
 ---
 
 ## Phase 1: Event-driven updates (remove polling)
 
-**Goal:** No timer-based polling. Fleet notifies Gateway on change; Gateway pushes once to WS clients; frontend refetches only on invalidation.
+**Status: Largely done**
 
-### Step 1.1 — Fleet server: emit events on mutations
+**Goal:** Avoid timer-driven churn. Fleet notifies Gateway on change; Gateway pushes to WebSocket clients; frontend refetches when invalidated (not on a fixed 1s loop).
 
-- **Implement:**  
-  - Add config: `GATEWAY_EVENT_URL` (e.g. `http://localhost:8000/internal/events`).  
-  - After every relevant mutation (task status, plan status, robot register/unregister), call `POST <GATEWAY_EVENT_URL>` with a small JSON body, e.g. `{ "type": "task.state_changed", "plan_id": 1, "task_id": 2, "status": "completed" }`.  
-  - Fire-and-forget (non-blocking); do not fail the gRPC call if the POST fails.  
-  - Call sites: executor (`update_task_status`, `update_plan` execution_status), and gRPC handlers (CreateTask, UpdateTask, DeleteTask, CreatePlan, UpdatePlan, DeletePlan, RegisterRobot, UnregisterRobot, etc.).  
-- **Test:**  
-  - Start Fleet + Gateway.  
-  - Trigger a mutation (e.g. create a task via API or run a plan that updates task status).  
-  - Verify Gateway receives a POST to `/internal/events` (log or temporary debug endpoint).  
-  - Optional: use a small script or curl to POST a fake event and confirm Gateway logs it.
+### Implemented (reference)
 
-### Step 1.2 — Gateway: event receiver and event-driven WebSocket
+- **Fleet:** `GATEWAY_EVENT_URL` (e.g. `http://gateway:8000/internal/events` in Compose); fire-and-forget POST after relevant mutations (`services/fleet_server/src/events.py` and call sites).
+- **Gateway:** `POST /internal/events` accepts fleet (and telemetry) events; `EventBus` with **per-subscriber `asyncio.Queue`s**; `/ws/global-updates` and `/ws/execution/{plan_id}` react to events (with periodic **ping** on idle timeout, not 1s data polling). See `services/gateway/src/routers/websocket.py`.
+- **Telemetry → Gateway:** Telemetry can POST health-change notifications to the same internal endpoint so the UI refreshes robot health without polling Telemetry on a timer (`services/telemetry/src/publishing.py`).
 
-- **Implement:**  
-  - Add `POST /internal/events` (or `/api/internal/events`): accept JSON `{ "type": "...", "plan_id": ?, "task_id": ?, ... }`.  
-  - Maintain in-memory lists of WS connections: (1) global-updates, (2) per-plan `ws/execution/{plan_id}`.  
-  - On event:  
-    - For `task.state_changed` / `plan.state_changed`: broadcast to global-updates `{ type: "invalidate", queries: ["plans", "tasks", "robots", "robot-allocations"] }`; for matching `plan_id`, also fetch tasks for that plan and send `{ type: "tasks_update", plan_id, tasks }` to all connections subscribed to `ws/execution/{plan_id}`.  
-    - For `robot.registered` / `robot.unregistered`: broadcast invalidation including `"robots"`, `"robot-allocations"`.  
-  - **Remove** the two `while True` + `asyncio.sleep(1)` loops in `ws/global-updates` and `ws/execution/{plan_id}`.  
-  - On WS connect: global-updates sends `{ type: "connected" }` once; execution sends one initial `tasks_update` then only on events.  
-- **Test:**  
-  - Open dashboard in browser; open DevTools → Network (WS).  
-  - Connect to `ws/global-updates` and `ws/execution/1` (for plan_id 1).  
-  - Trigger a task status change (e.g. run a plan or update a task via API).  
-  - Verify: exactly one new WS message (invalidate or tasks_update) after the mutation, and no repeated messages every second.  
-  - Verify: UI updates (e.g. task list or execution view) without needing a manual refresh.
+### Remaining / verify
 
-### Step 1.3 — Frontend: remove refetch intervals; rely on WS
+- **Frontend:** Confirm remaining `refetchInterval` usage is intentional (e.g. `Execution.tsx` plan query while `execution_status === 'executing'`). Tighten or remove if you want **zero** polling for that view.
+- **Execution WebSocket:** Today, subscribers receive task refreshes when **any** invalidation-relevant event is processed; fine-tuning per-`plan_id` filtering is optional.
 
-- **Implement:**  
-  - In `main.tsx`: remove default `refetchInterval` (or set to `false`).  
-  - In `Dashboard.tsx`: use `useRealtimeUpdates()`, remove `refetchInterval` from the robot-health query.  
-  - In `Execution.tsx`: use `useRealtimeUpdates()` and ensure execution WS is connected when the page is mounted; remove `refetchInterval` for tasks and robots.  
-  - Ensure `useRealtimeUpdates` invalidates query keys that match what the Gateway sends (e.g. `["tasks"]` and optionally `["tasks", planId]` for execution).  
-- **Test:**  
-  - Load Dashboard and Execution pages; confirm no refetch timer in React Query DevTools (or no 1s/2s/5s refetch).  
-  - Trigger a plan execution or task update from another tab/API; confirm the open tab updates within a second via WS-driven invalidation.  
-  - Confirm no console errors and that data (plans, tasks, robots) still appears correctly.
-
-**Phase 1 done when:** No `asyncio.sleep` in Gateway WS handlers; no refetchInterval for live data; UI updates only when Fleet sends an event.
+**Phase 1 complete when (strict):** No production reliance on short-interval refetch for data that is already covered by WS invalidation; Gateway WS paths do not use `asyncio.sleep(1)`-style polling loops for fresh data. *(Current code meets the Gateway side; frontend may still have narrow intervals.)*
 
 ---
 
 ## Phase 2: Robot health from heartbeat only
 
-**Goal:** Gateway stops polling each robot’s `/health`. Health shown in the UI comes only from the heartbeat store (robot → Gateway or, later, robot → Telemetry service).
+**Status: Done** (via Telemetry as the heartbeat sink; Gateway does not poll each robot’s HTTP `/health` for the dashboard path.)
+
+**Goal:** UI “online” state comes from heartbeat-derived data, not from the Gateway hammering each robot’s `/health`.
+
+### As implemented
+
+- **Telemetry** stores last-seen heartbeats and serves `GET /health/summary` and `GET /health/{robot_id}`.
+- **Gateway** `GET /api/robots/health/...` uses **`telemetry_client`** to call Telemetry and shape responses for the frontend (`services/gateway/src/routers/robots.py`).
+
+### Original steps (historical)
+
+The steps below described migrating **from** an in-gateway heartbeat store **to** Telemetry; that migration is done. Skim them only if you are comparing to older branches.
+
+<details>
+<summary>Original Phase 2 checklist (collapsed)</summary>
 
 ### Step 2.1 — Gateway: health from heartbeat store
 
-- **Implement:**  
-  - Change `GET /api/robots/health/all` (and any per-robot health) to **read from the existing heartbeat store** (e.g. `get_all_heartbeats()` from `routers/telemetry.py`).  
-  - Derive “reachable” from “last heartbeat within last N seconds” (e.g. 30–45 s).  
-  - Remove or stop using the code that calls each robot’s HTTP `/health` on a schedule.  
-- **Test:**  
-  - Start a fake robot (with heartbeat enabled) and Gateway.  
-  - Call `GET /api/robots/health/all`; confirm response includes that robot as reachable and uses timestamp from heartbeat.  
-  - Stop the robot (or disable heartbeat); wait until “last seen” is older than threshold; call health again; confirm robot is reported unreachable.  
-  - In the UI, open Dashboard and Robots; confirm “online” status matches heartbeat-based health and that no requests are sent to robot `:8001/health` (check Network tab).
+- **Was:** Read from in-gateway store / then from Telemetry.
+- **Now:** Read from Telemetry over HTTP.
 
-**Phase 2 done when:** Robot health in the UI is driven only by heartbeat data; no HTTP calls from Gateway (or frontend) to robot `/health`.
+**Phase 2 done when:** Robot health in the UI is driven by heartbeat data; no scheduled HTTP calls from the Gateway to each robot’s `/health` for that UI path.
+
+</details>
 
 ---
 
 ## Phase 3: Telemetry service (separate server) — heartbeat + read API
 
-**Goal:** Telemetry ingest and read API live in a **separate process**. Gateway no longer receives robot push; it **queries** the Telemetry service for health (and later for joints/video). Robots push to the Telemetry service.
+**Status: Done**
 
-### Step 3.1 — New service: Telemetry server
+**Goal:** Telemetry ingest and read API in a **separate process**; Gateway **queries** Telemetry for health; robots push to Telemetry.
 
-- **Implement:**  
-  - New app under `services/telemetry/` (or similar): FastAPI app with (1) **ingest:** `POST /ingest/heartbeat` (same payload as today), store last heartbeat per robot in memory or Redis; (2) **read:** `GET /health/summary` → `{ robot_id: { last_seen, reachable } }` using a “last seen within N seconds” rule.  
-  - Config: port (e.g. 8001 or 9000), optional Redis URL.  
-  - No dependency on Fleet or Gateway code; Gateway will call this service over HTTP.  
-- **Test:**  
-  - Start the Telemetry service.  
-  - `curl -X POST .../ingest/heartbeat -d '{"robot_id":"r1","reachable":true}'`; then `curl .../health/summary` → expect `r1` with last_seen and reachable.  
-  - Stop sending heartbeats; after threshold, `GET /health/summary` should show `r1` unreachable.
+### As implemented
 
-### Step 3.2 — Robots push to Telemetry service
+- **Telemetry app:** `services/telemetry/src/` — FastAPI, `POST /ingest/heartbeat`, `GET /health/summary`, `GET /health/{robot_id}`, `GET /healthz`.
+- **Robots:** `TELEMETRY_URL` + `POST .../ingest/heartbeat` (see fake robots under `robot_fleet/robots/fake/`).
+- **Gateway:** `TELEMETRY_URL` env (e.g. `http://telemetry:9000` in Compose) and `telemetry_client.py`.
+- **Compose:** `telemetry` service on **9000**, `gateway` depends on `telemetry`.
 
-- **Implement:**  
-  - Robots already have `GATEWAY_URL` for heartbeat. Introduce `TELEMETRY_URL` (e.g. `http://host.docker.internal:9000`).  
-  - Robot heartbeat loop POSTs to `TELEMETRY_URL/ingest/heartbeat` instead of (or in addition to, during migration) `GATEWAY_URL/api/telemetry/heartbeat`.  
-  - Once Gateway no longer exposes ingest, robots use only `TELEMETRY_URL`.  
-- **Test:**  
-  - Start Telemetry service and one fake robot with `TELEMETRY_URL` set.  
-  - Verify Telemetry service’s heartbeat store updates (e.g. `GET /health/summary` shows that robot).  
-  - Verify no heartbeat requests hit the Gateway (if ingest is removed from Gateway).
-
-### Step 3.3 — Gateway (BFF) queries Telemetry service for health
-
-- **Implement:**  
-  - Gateway config: `TELEMETRY_SERVICE_URL` (e.g. `http://localhost:9000`).  
-  - `GET /api/robots/health/all` (and any per-robot health) → Gateway calls `GET <TELEMETRY_SERVICE_URL>/health/summary` and maps the response to the shape the frontend expects.  
-  - Remove ingest from Gateway: drop `POST /api/telemetry/heartbeat` from the Gateway (or leave it as deprecated and unused once all robots use Telemetry service).  
-- **Test:**  
-  - Start Fleet, Gateway, Telemetry service, and one robot (pushing to Telemetry).  
-  - Open Dashboard; confirm robot health in the UI.  
-  - In Network tab, confirm frontend only calls Gateway; Gateway calls Telemetry service (server-side).  
-  - Confirm `POST /ingest/heartbeat` hits Telemetry service, not Gateway.
-
-**Phase 3 done when:** Telemetry is a separate server; robots push heartbeat to it; Gateway gets health only by querying the Telemetry service; frontend still gets health via Gateway.
+**Phase 3 done when:** Telemetry runs as its own service; robots send heartbeats to it; Gateway serves health only by reading Telemetry; UI still uses Gateway only. **— Achieved.**
 
 ---
 
 ## Phase 4: Telemetry read API for display (Gateway → Telemetry → UI)
 
-**Goal:** Gateway exposes endpoints that “display telemetry” (e.g. last N joint samples, video URL for a task) by querying the Telemetry service and returning the result to the frontend.
+**Status: Partially done**
 
-### Step 4.1 — Telemetry service: minimal read API for display
+**Goal:** Gateway exposes “display telemetry” endpoints (e.g. last N joint samples, artifact/video metadata) by proxying Telemetry.
 
-- **Implement:**  
-  - Add read endpoints that the Gateway can call, e.g.  
-    - `GET /telemetry/joints?robot_id=&task_id=&limit=100` (return empty list or stub until you have real joint storage).  
-    - `GET /telemetry/artifacts?task_id=` (return list of artifact metadata, e.g. video URL; stub if no storage yet).  
-  - Implement only enough so the Gateway can proxy and the frontend can show “no data” or placeholder.  
-- **Test:**  
-  - `curl` Gateway → Telemetry for these endpoints; verify response shape.  
-  - Optional: add a simple UI (e.g. on Execution or Robot detail) that calls Gateway `/api/telemetry/joints?...` or `/api/telemetry/artifacts?...` and displays “No data” or a table.
+### Done today
 
-### Step 4.2 — Gateway: proxy telemetry for display
+- **Health summary and per-robot health** — Telemetry read API + Gateway integration (this satisfies part of “read API for display”).
 
-- **Implement:**  
-  - Add Gateway routes, e.g. `GET /api/telemetry/joints`, `GET /api/telemetry/artifacts`, that forward query params to the Telemetry service and return the response to the client.  
-  - Frontend (or Postman) calls only Gateway; Gateway calls Telemetry service.  
-- **Test:**  
-  - From browser or Postman, `GET /api/telemetry/joints?robot_id=...` via Gateway; verify response comes from Telemetry service.  
-  - Confirm frontend never calls the Telemetry service directly (only Gateway).
+### Not done yet
 
-**Phase 4 done when:** Any “display telemetry” request from the UI goes Browser → Gateway → Telemetry service → Gateway → Browser; Telemetry service is the single source of truth for telemetry read API.
+- **Telemetry service:** `GET /telemetry/joints?...`, `GET /telemetry/artifacts?...` (or equivalent) — **not present**; no stub routes in `services/telemetry/src/routers/` for these.
+- **Gateway:** Proxies such as `GET /api/telemetry/joints` — **not present** alongside the legacy ingest router.
+
+### Next steps (when you pick this up)
+
+- Add minimal read endpoints on Telemetry (empty list / placeholder responses acceptable at first).
+- Add Gateway routes that forward query params and responses.
+- Optional: small UI surfaces that show “No data” until Phase 5 fills storage.
+
+**Phase 4 complete when:** Any **non-health** telemetry the UI needs flows Browser → Gateway → Telemetry → Gateway → Browser, with Telemetry as the single source of truth for those reads.
 
 ---
 
 ## Phase 5: Full telemetry ingest (joints, video, storage) — later
 
-**Goal:** Robots send joint streams and video to the Telemetry service; Telemetry service writes to your storage (time-series DB, object storage); read API returns real data for display and for training/export.
+**Status: Not done (future)**
+
+**Goal:** Robots send joint streams and video to Telemetry; Telemetry writes to durable storage (time-series, object store); read APIs return real data for display and training/export.
 
 ### Step 5.1 — Telemetry service: ingest streams and storage
 
-- **Implement:**  
-  - `POST /ingest/stream` or WebSocket for joint positions (and optionally logs), with `robot_id`, optional `task_id`/`plan_id`/`session_id`.  
-  - Chunked upload or stream for video/images; write to object storage (S3/MinIO); store metadata (and URLs) in DB or in-memory index.  
-  - Config for storage: time-series DB URL, bucket, credentials.  
-- **Test:**  
-  - Send sample joint payloads and a small “video” chunk to the Telemetry service; verify they are stored (query DB or object storage).  
-  - Call `GET /telemetry/joints?...` and `GET /telemetry/artifacts?task_id=...` and verify returned data matches what was ingested.
+- **Implement:** Stream or batch ingest for joints/logs; chunked upload for video/images; config for TSDB / object storage.
+- **Test:** Ingest sample payloads; assert storage and read-back via Phase 4 APIs.
 
-### Step 5.2 — Robot-side senders (per-robot)
+### Step 5.2 — Robot-side senders
 
-- **Implement:**  
-  - Per-robot: ROS1/2 or Rust node that reads joint state (and optionally camera), and POSTs or streams to `TELEMETRY_URL/ingest/stream` (and upload endpoint for video).  
-  - Tag with `robot_id`, and when running a task, `task_id`/`plan_id`/`session_id` so you can query by execution.  
-- **Test:**  
-  - Run one robot with the sender; run a task; verify Telemetry service receives and stores data; query via Gateway and show in UI (or export for training).
+- **Implement:** Per-robot senders tagging `robot_id`, `task_id` / `plan_id` / `session_id`.
+- **Test:** Run task, verify ingest + UI or export.
 
-**Phase 5** can be broken into smaller steps (e.g. joints only first, then video) and scheduled after Phases 1–4 are stable.
+**Phase 5** can be split (joints first, then video) once Phase 4 stubs exist.
 
 ---
 
 ## Implementation order and testing summary
 
-| Phase | What you implement | How you test |
-|-------|--------------------|--------------|
-| **1** | Event-driven updates: Fleet → Gateway callback; Gateway event-driven WS; Frontend no refetchInterval | Trigger mutation; verify single WS message and UI update; no 1s loops. |
-| **2** | Robot health from heartbeat only; Gateway stops polling robot /health | Health from heartbeat store; no requests to robot :port/health. |
-| **3** | Telemetry service (new server): ingest heartbeat + read health/summary; robots push to it; Gateway queries it for health | Telemetry service runs; robots POST to it; Gateway GET health from it; UI unchanged. |
-| **4** | Telemetry read API for display; Gateway proxies to Telemetry service | Browser → Gateway → Telemetry for joints/artifacts; frontend never talks to Telemetry. |
-| **5** | Full ingest: joints, video, storage; robot senders | Ingest → storage; read API returns real data; optional UI or export. |
+| Phase | Status | What to implement / verify |
+|-------|--------|----------------------------|
+| **1** | Largely done | Fleet POST + Gateway WS queues + frontend invalidation; trim any leftover refetch intervals you care about. |
+| **2** | Done | Health from Telemetry-derived heartbeats; no robot `/health` polling for that path. |
+| **3** | Done | Separate Telemetry container; `TELEMETRY_URL` on Gateway and robots. |
+| **4** | Partial | Joints/artifacts read + Gateway proxy **still to build**; health path **done**. |
+| **5** | Not done | Full ingest + storage + robot senders. |
 
-Dependencies: 2 depends on heartbeat existing (already in place). 3 depends on 2 conceptually (health from “telemetry” source). 4 depends on 3 (Telemetry service exists and has read API). 5 depends on 4 (read API shape) and can be done incrementally (joints first, then video).
+Dependencies: Phase 4 (non-health reads) builds on Phase 3. Phase 5 builds on Phase 4’s API shapes and storage choices.
 
-This is the full set of main architectural components and the order in which to implement and test them.
+This remains the ordered roadmap; phases **1–3** and the **health** portion of **4** match the current codebase; **4** (joints/video/artifacts) and **5** are the main forward work.
