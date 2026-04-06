@@ -866,7 +866,8 @@ function SendTaskTab({ robot, health }: { robot: Robot, health?: RobotHealth }) 
     setResponse(null)
 
     try {
-      const robotUrl = `http://${robot.task_server_info.host}:${robot.task_server_info.port}/do_task`
+      const host = robot.task_server_info.host === 'host.docker.internal' ? 'localhost' : robot.task_server_info.host
+      const robotUrl = `http://${host}:${robot.task_server_info.port}/do_task`
 
       const response = await fetch(robotUrl, {
         method: 'POST',
