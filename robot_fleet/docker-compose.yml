@@ -1,0 +1,71 @@
+# Run from repo root: docker compose up --build
+# Frontend: run separately (npm run dev) and point at http://localhost:8000
+#
+# The db container uses a persistent Docker volume (db_data).
+# Data survives container restarts/rebuilds.
+#
+# Port/host values here MUST match packages/config.py.
+# Inside the Compose network, services reach each other by name (db, gateway, etc.).
+# To reach the host machine from inside a container, use host.docker.internal.
+
+services:
+  db:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: robot_user       # packages/config.py DB_USER
+      POSTGRES_PASSWORD: secret       # packages/config.py DB_PASSWORD
+      POSTGRES_DB: robot_fleet        # packages/config.py DB_NAME
+    ports:
+      - "5433:5432"  # 5433 on host to avoid conflict with host Postgres
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U robot_user -d robot_fleet"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  fleet-server:
+    build:
+      context: .
+      dockerfile: services/fleet_server/Dockerfile
+    env_file:
+      - ../.env
+    environment:
+      DATABASE_URL: postgresql+asyncpg://robot_user:secret@db:5432/robot_fleet
+      GATEWAY_EVENT_URL: http://gateway:8000/internal/events
+      # Robots register with host=localhost; inside this container localhost
+      # is the container itself.  DEFAULT_ROBOT_HOST tells the executor to
+      # remap localhost -> host.docker.internal so it can reach robots on the host.
+      DEFAULT_ROBOT_HOST: host.docker.internal
+    ports:
+      - "50051:50051"   # packages/config.py GRPC_SERVER_PORT
+    depends_on:
+      db:
+        condition: service_healthy
+
+  telemetry:
+    build:
+      context: .
+      dockerfile: services/telemetry/Dockerfile
+    environment:
+      GATEWAY_EVENT_URL: http://gateway:8000/internal/events
+    ports:
+      - "9000:9000"     # packages/config.py TELEMETRY_PORT
+
+  gateway:
+    build:
+      context: .
+      dockerfile: services/gateway/Dockerfile
+    environment:
+      GRPC_SERVER_ADDRESS: fleet-server:50051
+      DATABASE_URL: postgresql+asyncpg://robot_user:secret@db:5432/robot_fleet
+      TELEMETRY_URL: http://telemetry:9000
+    ports:
+      - "8000:8000"     # packages/config.py GATEWAY_PORT
+    depends_on:
+      - fleet-server
+      - telemetry
+
+volumes:
+  db_data:

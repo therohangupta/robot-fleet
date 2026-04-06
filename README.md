@@ -1,272 +1,312 @@
 <h1 align="center">RobotFleet: An Open-Source Framework for Centralized Multi-Robot Task Planning</h1>
 
 <p align="center">
-  <a href="https://arxiv.org/pdf/2510.10379">Paper</a> •
-  <a href="https://youtu.be/1L4maFDmo-o">Video Overview + Demo</a> •
-  <a href="#setup">Setup</a> •
-  <a href="#running-the-server">Usage</a> •
-  <a href="#building-and-running-example-robot-docker-containers">Examples</a> •
-  <a href="#architecture">Architecture</a> •
-  <a href="#using-the-cli">CLI</a>
+  <a href="https://arxiv.org/pdf/2510.10379">Paper</a> &bull;
+  <a href="https://youtu.be/1L4maFDmo-o">Video Overview + Demo</a> &bull;
+  <a href="#quick-start-docker-compose">Quick Start</a> &bull;
+  <a href="#architecture">Architecture</a> &bull;
+  <a href="#dashboard-frontend">Dashboard</a> &bull;
+  <a href="#cli-reference">CLI</a>
 </p>
 
-
-RobotFleet is an open-source framework for centralized multi-robot task planning and scheduling, designed to coordinate heterogeneous fleets using modular components and LLM-based planning. Whether you're working with mobile manipulators, navigation robots, or custom agents, RobotFleet helps you scale multi-robot operations with ease.
-
+RobotFleet is an open-source framework for centralized multi-robot task planning and scheduling. It coordinates heterogeneous fleets using modular LLM-based planning, dependency-aware DAG execution, and a real-time dashboard.
 
 ## Key Features
 
-- Centralized Task Planning with support for multi-goal missions.
-- LLM-Driven Planning: Converts natural language goals into dependency-aware task plans.
-- Modular Architecture: Planner, allocator, and executors are all easily swappable.
-- Containerized Robots: Deploy each robot as a Docker service for scalable fleet management.
-- Dynamic World State: Maintain and update a declarative world model in real-time.
-- Supports Replanning: React to execution feedback and dynamically reallocate tasks.
+- **LLM-Driven Planning** &mdash; converts natural language goals into dependency-aware task DAGs.
+- **Modular Architecture** &mdash; planners, allocators, and executors are all swappable.
+- **Dependency-Aware Execution** &mdash; topological task ordering with parallel multi-robot dispatch.
+- **Real-Time Dashboard** &mdash; React frontend with live WebSocket updates, DAG visualization, and execution monitoring.
+- **Containerized Robots** &mdash; each robot runs as a Docker service for scalable fleet management.
+- **Dynamic World State** &mdash; maintain and update a declarative world model in real-time.
+- **Replanning** &mdash; react to execution failures and dynamically reallocate tasks.
 
 ## Architecture
-RobotFleet consists of three major components:
 
-1. Task Planner: 
-Converts high-level goals into task DAGs using different LLM prompting strategies:
-- Monolithic Prompt
-- Big DAG
-- Per-Goal DAG
+RobotFleet is composed of five services:
 
-2. Task Allocator: 
-Assigns tasks within DAGs to robots using:
-- LLM-based reasoning
-- Mixed-Integer Linear Programming (MILP)
+| Service | Port | Role |
+|---------|------|------|
+| **Fleet Server** (gRPC) | 50051 | Orchestration: planning, allocation, DAG execution |
+| **Gateway** (REST/WS) | 8000 | Client-facing API surface, real-time WebSocket fanout |
+| **Telemetry** | 9000 | Robot heartbeat ingest, health monitoring |
+| **Dashboard** (Vite/React) | 5173 | Web UI for fleet management, plan creation, execution monitoring |
+| **PostgreSQL** | 5432 | Persistent storage for plans, tasks, robots, goals, world state |
 
-3. Task Status and Schedule Manager:
-The actual management of the task plan/schedule that sends natural language commands to each robot and maintains the status of each robot. 
+The **Gateway** is the only client-facing API. The dashboard, CLI, and any external client all talk to the Gateway, which bridges to Fleet Server via gRPC and reads health from Telemetry.
 
-4. On-Robot Task Executors
-A standard set of functions that can run on robots to execute the tasks they are given. Effectively, a task-to-action module that returns statuses of task successes and failures back to the central planner. See `robots/demo/README.md` for how different robots implement this.
+**Execution flow:**
+1. Goals are defined (natural language descriptions).
+2. A **planner** (Big DAG, Per-Goal DAG, or Monolithic) converts goals into a task DAG.
+3. An **allocator** (LLM-based or algorithmic) assigns tasks to robots.
+4. The **executor** dispatches tasks in topological order, respecting dependencies, running robots in parallel.
+5. The dashboard shows live progress via WebSocket.
 
 ![RobotFleet Diagram](/Diagram.png)
 
+## Prerequisites
 
-## Setup
+- Python 3.10+
+- Node.js 18+ and npm
+- Docker and Docker Compose
+- PostgreSQL 14+ (for bare-metal; Docker Compose includes one)
 
-### Prerequisites
+## Quick Start (Docker Compose)
 
-- Python 3.8+
-- PostgreSQL 14+
-- Docker (for robot deployment)
+This is the recommended way to run RobotFleet. Docker Compose starts the database, fleet server, gateway, and telemetry. The frontend and fake robots run on the host.
+
+### 1. Install the Python package (for CLI and robot scripts)
+
+```bash
+cd robot_fleet && pip install -e . && cd ..
+```
+
+### 2. Set up environment
+
+Create a `.env` file at the repo root with your OpenAI key (required for LLM planners/allocators):
+
+```
+OPENAI_API_KEY=sk-...
+```
+
+### 3. Start backend services
+
+```bash
+cd robot_fleet
+docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build
+```
+
+This starts PostgreSQL (port 5433 on host), Fleet Server (50051), Gateway (8000), and Telemetry (9000).
+
+### 4. Start the frontend
+
+In a separate terminal:
+
+```bash
+cd robot_fleet/services/dashboard-web
+npm install
+npm run dev
+```
+
+The dashboard is available at **http://localhost:5173**.
+
+### 5. Start fake robots
+
+In a separate terminal:
+
+```bash
+./robot_fleet/scripts/fake_robots/run_examples_docker.sh
+```
+
+### 6. Populate demo data
+
+```bash
+./robot_fleet/scripts/examples/populate_fake.sh
+```
+
+This registers 3 robots, sets up world state, and creates two goals ("prepare breakfast toast" and "clean up dirty dishes").
+
+### 7. Create and execute a plan
+
+Via the dashboard: navigate to **Plans**, click **Create Plan with AI**, select goals and methods, then execute.
+
+Or via CLI:
+
+```bash
+robotctl plan create dag llm 1,2
+robotctl plan start <plan_id>
+```
+
+## Dashboard Frontend
+
+The dashboard at `robot_fleet/services/dashboard-web` is a React + TypeScript app (Vite, TailwindCSS, React Query, ReactFlow).
+
+### Key Pages
+
+- **Robots** &mdash; fleet overview, health status, send individual tasks, register/unregister robots.
+- **Plans** &mdash; create plans (AI or manual), allocate tasks to robots, filter by status (unallocated/allocated/executing/completed/failed).
+- **Execution Monitor** &mdash; live task progress with pills for completed/executing/pending/failed/cancelled, per-robot fleet table, task dependency DAG, event log. Retry failed plans with "Copy & Retry".
+- **Goals** &mdash; manage natural language goals.
+- **World** &mdash; manage world state statements.
+- **Methods** &mdash; view available planners and allocators.
+
+### Running the Frontend
+
+```bash
+cd robot_fleet/services/dashboard-web
+npm install    # first time only
+npm run dev    # starts on http://localhost:5173
+```
+
+The Vite dev server proxies `/api/*` and `/ws/*` to the Gateway at `localhost:8000`.
+
+## Bare-Metal Setup (without Docker Compose)
+
+If you prefer running services directly:
 
 ### Database Setup
 
-1. Install PostgreSQL:
 ```bash
-# For macOS
-brew install postgresql@14
-brew services start postgresql@14
+# macOS
+brew install postgresql@14 && brew services start postgresql@14
 
-# For Ubuntu/Debian
-sudo apt-get update
-sudo apt-get install postgresql-14
-sudo systemctl start postgresql
+# Create database
+psql postgres -c "CREATE DATABASE robot_fleet;"
+psql postgres -c "CREATE USER robot_user WITH PASSWORD 'secret';"
+psql postgres -c "GRANT ALL PRIVILEGES ON DATABASE robot_fleet TO robot_user;"
+psql robot_fleet -c "GRANT ALL ON SCHEMA public TO robot_user;"
 ```
 
-2. Create the database and user:
-```bash
-# Connect to PostgreSQL
-psql postgres
+### Start Services (4 terminals)
 
-# In the PostgreSQL prompt:
-CREATE DATABASE robot_fleet;
-CREATE USER robot_user WITH PASSWORD 'secret';
-GRANT ALL PRIVILEGES ON DATABASE robot_fleet TO robot_user;
-\c robot_fleet
-GRANT ALL ON SCHEMA public TO robot_user;
-\q
+```bash
+# Terminal 1 – Fleet Server (gRPC)
+cd robot_fleet && python -m services.fleet_server.src -v
+
+# Terminal 2 – Telemetry
+cd robot_fleet && python -m services.telemetry.src --port 9000
+
+# Terminal 3 – Gateway
+cd robot_fleet/services/gateway && uvicorn src.main:app --reload --port 8000
+
+# Terminal 4 – Frontend
+cd robot_fleet/services/dashboard-web && npm run dev
 ```
 
-3. Verify the connection:
+## Examples
+
+Demo scripts live in `robot_fleet/scripts/examples/`.
+
+### populate_fake.sh
+
+Registers 3 fake robots, sets up world state, and creates goals:
+
 ```bash
-psql -U robot_user -d robot_fleet -h localhost
-# Enter password when prompted: secret
-\q
+./robot_fleet/scripts/examples/populate_fake.sh
 ```
 
-## Running the Server
+| Robot | Type | Port | Description |
+|-------|------|------|-------------|
+| moma-1 | Mobile Manipulator | 8001 | Navigate and manipulate objects |
+| nav-1 | Navigation | 8002 | Mobile with basket |
+| pick_place-1 | Pick & Place | 8003 | Kitchen countertop manipulator |
 
-From the project root directory:
+After populating, create plans via the dashboard or CLI.
 
-start a venv and make sure all requirements are installed 
-```bash
-source venv/bin/activate
-
-pip install -r requirements
-
-# Start the server
-python3 -m robot_fleet.server
-```
-
-The server will start on port 50051 by default. Check for successful initialization:
-- The server should print "Starting Robot Fleet Management Server on port 50051"
-- Initial database tables will be created automatically
-
-## Running the Demo
-
-To quickly set up a demo environment with example robots, world state, and goals:
+## Fake Robot Docker Containers
 
 ```bash
-# 1. Start the robot containers
-./robot_fleet/scripts/run_examples_docker.sh
+# Build images (first time or after Dockerfile changes)
+./robot_fleet/scripts/fake_robots/rebuild_examples_docker.sh
 
-# 2. Populate the fleet with robots, world state, and goals
-./examples/populate_fake.sh
+# Run containers
+./robot_fleet/scripts/fake_robots/run_examples_docker.sh
 
-# 3. Start creating plans!
-robotctl plan create dag llm 1,2
-robotctl plan create monolithic cost_based 1,2
-```
+# Run with bind mounts (dev mode — code changes without rebuild)
+./robot_fleet/scripts/fake_robots/run_examples_docker_dev.sh
 
-The demo sets up:
-- **4 robots**: Pick-place (kitchen), Navigation (mobile), 2x Mobile manipulators
-- **World state**: House layout with kitchen, dining room, living room
-- **Goals**: "prepare breakfast toast" and "clean up dirty dishes"
-
-## Building Docker Images for Robot Types
-
-To build and run all example robot containers for testing and development, use the provided scripts. This is the recommended way to set up the example robots.
-
-### 1. Make Scripts Executable
-
-Before running the scripts, ensure they are executable:
-
-```bash
-chmod +x robot_fleet/scripts/*
-```
-
-### 2. Build All Example Robot Docker Images
-
-Run the following script to build Docker images for all example robots (pick_place, nav, moma):
-
-```bash
-robot_fleet/scripts/rebuild_examples_docker.sh
-```
-
-This will build and tag each image appropriately for use with the fleet manager.
-
-### 3. Start All Example Robot Containers
-
-To launch all example robot containers in detached mode, run:
-
-```bash
-robot_fleet/scripts/run_examples_docker.sh
-```
-
-This will start each robot container and map the appropriate ports as defined in their configuration files.
-
-### 4. Stopping Example Containers
-
-To stop the running example containers, you can use:
-
-```bash
+# Stop containers
 docker stop pick_place_robot nav_robot moma_robot
 ```
 
-Or stop all running containers (use with caution):
+## Configuration
+
+All shared configuration (ports, hosts, URLs) lives in `robot_fleet/packages/config.py` as the single source of truth. Docker Compose overrides values via environment variables.
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `DATABASE_URL` | `postgresql+asyncpg://robot_user:secret@localhost:5432/robot_fleet` | Database connection |
+| `GRPC_SERVER_PORT` | `50051` | Fleet Server gRPC port |
+| `GATEWAY_PORT` | `8000` | Gateway HTTP port |
+| `TELEMETRY_PORT` | `9000` | Telemetry service port |
+| `DEFAULT_ROBOT_HOST` | `localhost` | Default host for robot task servers |
+| `OPENAI_API_KEY` | (from `.env`) | Required for LLM planners/allocators |
+
+## CLI Reference
+
+The `robotctl` CLI communicates with the Gateway.
+
+### Robots
 
 ```bash
-docker stop $(docker ps -q)
-```
-
-## Using the CLI
-
-The `robotctl` command is the main interface for interacting with the robot fleet.
-
-**For a full CLI reference, see [`robot_fleet/cli/ROBOTCTL_CLI.md`](robot_fleet/cli/ROBOTCTL_CLI.md).**
-
-### Register a Robot (Pick Place)
-
-```bash
-# Navigate to a directory with the robot config file
-cd robot_fleet/robots/examples/pick_place
-
-# Register a robot
-robotctl register pick_place.yaml pick_place
-# Or bulk register
-robotctl register pick_place.yaml --num 3
-```
-
-### Create Plans
-
-Once you have the docker containers running in the example, and all 3 robots are registered, you can start to generate plans with the robots and the world state items.
-
-Here is an example if you had two goal's with goal ids 1 and 2, and you wanted to use the dag planning strategy and llm allocation strategy
-
-```bash
-robotctl plan create dag llm 1,2
-```
-
-### Start Plans
-
-Run the following command with the appropriate plan id, and the plan will start executing and sending the natural language tasks one after another to the robot servers, waiting on dependencies.
-
-```bash
-robotctl plan start 1
-```
-
-### Other CLI Actions
-### List Robots
-
-```bash
+robotctl register <yaml_path> <robot_id> [--host HOST] [--port PORT]
 robotctl list
+robotctl unregister <robot_id>
 ```
 
-### Unregister a Robot
+### Plans
 
 ```bash
-robotctl unregister pick_place
-```
-
-### Manage Goals
-
-```bash
-robotctl goal add "Move all boxes from warehouse A to B"
-robotctl goal list
-robotctl goal get 1 --verbose
-robotctl goal delete 1
-```
-
-### Manage Tasks
-
-```bash
-robotctl task add "Move to coordinates (x,y)" --goal-id 1 --plan-id 1 --robot-id robot1 --robot-type nav
-robotctl task list
-robotctl task list --robot-id robot1
-robotctl task list --goal-id 1
-robotctl task get 1 --verbose
-robotctl task delete 1
-```
-
-
-### Manage World Statements
-
-```bash
-robotctl world add "Box A is at location X"
-robotctl world list
-robotctl world get 123
-robotctl world delete 123
-```
-
-### Manage Plans
-
-```bash
-robotctl plan create dag llm 1,2,3
+robotctl plan create <strategy> <allocator> <goal_ids>   # e.g. dag llm 1,2
 robotctl plan list
-robotctl plan get 1 --verbose
-robotctl plan get 1 --analyze-idle
-robotctl plan delete 1
+robotctl plan get <id> [--verbose] [--analyze-idle]
+robotctl plan start <id>
+robotctl plan delete <id>
 ```
 
-### Database Reset
-
-To completely reset the database, restart the server like this:
+### Goals
 
 ```bash
-python3 -m robot_fleet.server --reset-db
+robotctl goal add "<description>"
+robotctl goal list
+robotctl goal get <id> [--verbose]
+robotctl goal delete <id>
 ```
+
+### Tasks
+
+```bash
+robotctl task add "<description>" --goal-id <id> --plan-id <id> --robot-id <id> --robot-type <type>
+robotctl task list [--robot-id <id>] [--goal-id <id>]
+robotctl task get <id> [--verbose]
+robotctl task delete <id>
+```
+
+### World State
+
+```bash
+robotctl world add "<statement>"
+robotctl world list
+robotctl world get <id>
+robotctl world delete <id>
+```
+
+### Database
+
+```bash
+# Reset database (destroys all data)
+cd robot_fleet && python -m services.fleet_server.src --reset-db
+```
+
+## Project Structure
+
+```
+robot_fleet/
+├── packages/              # Shared libraries
+│   ├── config.py          # Single source of truth for all configuration
+│   ├── metrics.py         # Structured observability
+│   ├── proto/             # gRPC protobuf definitions
+│   ├── fleet_sdk/         # DB models, instance registry (used by services)
+│   ├── robot_sdk/         # Robot client for task dispatch
+│   └── client_sdk/        # TypeScript + Python SDKs for Gateway API
+├── services/
+│   ├── fleet_server/      # gRPC orchestration: planning, allocation, execution
+│   ├── gateway/           # REST/WebSocket API (client-facing)
+│   ├── telemetry/         # Robot health monitoring
+│   └── dashboard-web/     # React frontend
+├── robots/
+│   ├── fake/              # Simulated robots for testing (moma, nav, pick_place)
+│   └── real/              # Real robot integrations
+├── scripts/
+│   ├── examples/          # Demo population scripts
+│   ├── fake_robots/       # Docker build/run scripts for fake robots
+│   ├── database_mgmt/     # DB backup/restore scripts
+│   └── grpc_gen.sh        # Regenerate protobuf stubs
+├── cli/                   # robotctl CLI
+├── docker-compose.yml     # Production Docker Compose
+└── docker-compose.dev.yml # Dev overlay (bind mounts, live reload)
+```
+
+## License
+
+See [LICENSE](LICENSE) for details.

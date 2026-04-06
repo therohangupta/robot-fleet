@@ -5,8 +5,8 @@ import sys
 import os
 import re
 from typing import Optional, List
-from ..proto import fleet_manager_pb2
-from ..robots.schema.yaml_validator import YAMLValidator
+from packages.proto import fleet_manager_pb2
+from packages.robot_sdk.src.schema.yaml_validator import YAMLValidator
 from .printer import (
     print_task, print_all_tasks, 
     print_goal, print_all_goals, 
@@ -21,7 +21,7 @@ from .printer import (
     ALLOCATION_STRATEGY_CHOICES,
     ALLOCATION_STRATEGY_STRINGS,
 )
-from ..client import FleetManagerClient
+from packages.fleet_sdk.src.grpc_client import FleetManagerClient
 import yaml
 import asyncio
 
@@ -502,8 +502,10 @@ def delete(task_id):
             
         client = FleetManagerClient()
         response = client.delete_task(task_id_int)
-        if response.task:
+        if getattr(response, "success", False):
             click.echo(f"Task {task_id_int} deleted successfully")
+            if getattr(response, "updated_task_ids", None):
+                click.echo(f"Unlinked dependencies from tasks: {list(response.updated_task_ids)}")
         else:
             click.echo(f"Error: {response.error}", err=True)
     except grpc.RpcError as e:

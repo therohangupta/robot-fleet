@@ -1,0 +1,166 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ------------------------------------------------------------------ */
+/* Design tokens                                                       */
+/* ------------------------------------------------------------------ */
+:root {
+  --color-accent: #06b6d4;
+  --color-accent-muted: #0891b2;
+  --color-accent-subtle: rgba(6, 182, 212, 0.12);
+  --color-violet: #8b5cf6;
+  --color-bg: #111318;
+  --color-surface: #16181d;
+  --color-surface-raised: #1c1f26;
+  --color-surface-overlay: #22252e;
+  --color-border: #2a2d37;
+  --color-border-subtle: #22252e;
+  --color-text: #e2e4e9;
+  --color-text-secondary: #8b8fa3;
+  --color-text-muted: #5c5f6e;
+  --radius-default: 0.625rem;
+}
+
+/* ------------------------------------------------------------------ */
+/* Base                                                                */
+/* ------------------------------------------------------------------ */
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+}
+
+/* ------------------------------------------------------------------ */
+/* Scrollbar                                                           */
+/* ------------------------------------------------------------------ */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-text-muted);
+}
+
+/* Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-border) transparent;
+}
+
+/* ------------------------------------------------------------------ */
+/* Selection                                                           */
+/* ------------------------------------------------------------------ */
+::selection {
+  background: rgba(6, 182, 212, 0.25);
+  color: #fff;
+}
+
+/* ------------------------------------------------------------------ */
+/* Focus ring                                                          */
+/* ------------------------------------------------------------------ */
+:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* ------------------------------------------------------------------ */
+/* Utility classes                                                     */
+/* ------------------------------------------------------------------ */
+
+.glow-border {
+  position: relative;
+}
+.glow-border::before {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  background: linear-gradient(135deg, var(--color-accent), var(--color-violet));
+  border-radius: inherit;
+  opacity: 0;
+  transition: opacity 0.25s ease;
+  z-index: -1;
+}
+.glow-border:hover::before {
+  opacity: 0.4;
+}
+
+.status-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+}
+.status-dot.online {
+  background-color: #34d399;
+  box-shadow: 0 0 6px #34d399;
+}
+.status-dot.offline {
+  background-color: #5c5f6e;
+}
+.status-dot.busy {
+  background-color: #fbbf24;
+  box-shadow: 0 0 6px #fbbf24;
+}
+.status-dot.error {
+  background-color: #f87171;
+  box-shadow: 0 0 6px #f87171;
+}
+
+.card-hover {
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 0.2s ease;
+}
+.card-hover:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px -2px rgba(0, 0, 0, 0.4);
+}
+
+.gradient-text {
+  background: linear-gradient(135deg, var(--color-accent), var(--color-violet));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.grid-bg {
+  background-image:
+    linear-gradient(to right, rgba(42, 45, 55, 0.4) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(42, 45, 55, 0.4) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+.radial-glow {
+  background: radial-gradient(ellipse at top, rgba(6, 182, 212, 0.06) 0%, transparent 60%);
+}
+
+/* ------------------------------------------------------------------ */
+/* React Flow overrides                                                */
+/* ------------------------------------------------------------------ */
+.react-flow__node {
+  font-family: 'JetBrains Mono', monospace;
+}
+.react-flow__edge-path {
+  stroke: var(--color-accent);
+  stroke-width: 2;
+}

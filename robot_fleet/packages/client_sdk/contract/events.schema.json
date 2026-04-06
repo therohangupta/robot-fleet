@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Gateway Realtime Events",
+  "type": "object",
+  "oneOf": [
+    {
+      "title": "Connected",
+      "type": "object",
+      "properties": {
+        "type": { "const": "connected" },
+        "message": { "type": "string" }
+      },
+      "required": ["type", "message"],
+      "additionalProperties": true
+    },
+    {
+      "title": "Invalidate",
+      "type": "object",
+      "properties": {
+        "type": { "const": "invalidate" },
+        "queries": { "type": "array", "items": { "type": "string" } },
+        "timestamp": { "type": "number" }
+      },
+      "required": ["type", "queries", "timestamp"],
+      "additionalProperties": true
+    },
+    {
+      "title": "TasksUpdate",
+      "type": "object",
+      "properties": {
+        "type": { "const": "tasks_update" },
+        "plan_id": { "type": "integer" },
+        "tasks": { "type": "array", "items": { "type": "object" } }
+      },
+      "required": ["type", "plan_id", "tasks"],
+      "additionalProperties": true
+    }
+  ]
+}
+

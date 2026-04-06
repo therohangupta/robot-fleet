@@ -1,0 +1,36 @@
+# Dev overlay: live reload for gateway and telemetry (and source mounts for fleet-server).
+# Usage: docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build
+# Frontend: always run on host (npm run dev) for UI live reload.
+
+services:
+  gateway:
+    build:
+      context: .
+      dockerfile: services/gateway/Dockerfile
+    volumes:
+      - ./services/gateway/src:/app/services/gateway/src:ro
+      - ./packages:/app/packages:ro
+    command: ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+    environment:
+      GRPC_SERVER_ADDRESS: fleet-server:50051
+      DATABASE_URL: postgresql+asyncpg://robot_user:secret@db:5432/robot_fleet
+      TELEMETRY_URL: http://telemetry:9000
+
+  fleet-server:
+    volumes:
+      - ./services/fleet_server/src:/app/services/fleet_server/src:ro
+      - ./packages:/app/packages:ro
+    environment:
+      DATABASE_URL: postgresql+asyncpg://robot_user:secret@db:5432/robot_fleet
+      GATEWAY_EVENT_URL: http://gateway:8000/internal/events
+      DEFAULT_ROBOT_HOST: host.docker.internal
+
+  telemetry:
+    build:
+      context: .
+      dockerfile: services/telemetry/Dockerfile
+    volumes:
+      - ./services/telemetry/src:/app/services/telemetry/src:ro
+    command: ["uvicorn", "services.telemetry.src.main:app", "--host", "0.0.0.0", "--port", "9000", "--reload"]
+    environment:
+      GATEWAY_EVENT_URL: http://gateway:8000/internal/events

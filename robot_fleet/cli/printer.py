@@ -2,13 +2,13 @@
 import click
 import sys
 from typing import List
-from ..proto import fleet_manager_pb2
+from packages.proto import fleet_manager_pb2
 
 PLANNING_STRATEGY_ENUMS = {
     "monolithic": fleet_manager_pb2.PlanningStrategy.MONOLITHIC,
     "dag": fleet_manager_pb2.PlanningStrategy.DAG,
     "big_dag": fleet_manager_pb2.PlanningStrategy.BIG_DAG,
-    "manual": fleet_manager_pb2.PlanningStrategy.MANUAL,
+    "manual": fleet_manager_pb2.PlanningStrategy.MANUAL_PLAN,
 }
 PLANNING_STRATEGY_CHOICES = list(PLANNING_STRATEGY_ENUMS.keys())
 PLANNING_STRATEGY_STRINGS = {v: k for k, v in PLANNING_STRATEGY_ENUMS.items()}
@@ -18,6 +18,7 @@ ALLOCATION_STRATEGY_ENUMS = {
     "llm": fleet_manager_pb2.AllocationStrategy.LLM,
     "cost_based": fleet_manager_pb2.AllocationStrategy.COST_BASED,
     "none": fleet_manager_pb2.AllocationStrategy.NONE,
+    "manual": fleet_manager_pb2.AllocationStrategy.MANUAL_ALLOCATION,
 }
 ALLOCATION_STRATEGY_CHOICES = list(ALLOCATION_STRATEGY_ENUMS.keys())
 ALLOCATION_STRATEGY_STRINGS = {v: k for k, v in ALLOCATION_STRATEGY_ENUMS.items()}
@@ -103,7 +104,7 @@ def print_goal(goal, plans=None, tasks=None, verbose=False, include_newline: boo
 
 import click
 from collections import defaultdict, deque
-from ..proto import fleet_manager_pb2
+from packages.proto import fleet_manager_pb2
 
 def print_plan(plan, goals=None, tasks=None, verbose=False, include_newline: bool = True):
     """Print details of a single plan as an ASCII DAG per goal."""
@@ -172,7 +173,7 @@ def print_robot(robot, verbose=False, tasks=None, include_newline: bool = True):
     if status:
         state = getattr(status, 'state', None)
         if state is not None:
-            from ..proto import fleet_manager_pb2
+            from packages.proto import fleet_manager_pb2
             state_name = fleet_manager_pb2.RobotStatus.State.Name(state)
             click.echo(f"Status: {state_name}")
         if getattr(status, 'message', None):

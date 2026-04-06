@@ -1,0 +1,25 @@
+# Nav Robot Type Definition
+metadata:
+  name: nav
+  description: "robot with navigation capabilities"
+
+deployment:
+  docker_host: localhost # Default to local deployment for testing
+  docker_port: 2375
+
+taskServer:
+  host: "host.docker.internal"
+  port: 8002
+
+container:
+  image: robotfleet/nav_robot:1.0
+  environment:
+    ROBOT_ID: "" # Will be set when instantiating
+    LOG_LEVEL: info
+    PORT: "8002" # Default port for the robot server
+  required_devices:
+    - /dev/ttyUSB* # For arm and gripper
+
+capabilities:
+  - navigation
+  - has basket with large capacity that can carry items other robots put in it

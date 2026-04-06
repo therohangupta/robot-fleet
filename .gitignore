@@ -60,6 +60,17 @@ coverage.xml
 .mypy_cache/
 .dmypy.json
 
+# Node / NPM / Frontend
+node_modules/
+.vite/
+*.tsbuildinfo
+.eslintcache
+.turbo/
+package-lock.json
+
+# Database backups (generated, not source)
+*.sql
+
 # VS Code
 .vscode/
 
@@ -71,4 +82,5 @@ coverage.xml
 *.sublime-workspace
 *.sublime-project 
 
+# Secrets
 .env
